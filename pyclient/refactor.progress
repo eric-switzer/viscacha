@@ -46,6 +46,7 @@ excalibur: refactor import *
 excalibur: remove telnet interface; better secure message passing
 use logging class
 sanity of threads, code
+shorten printing, reprs etc.
 
 consider for removal:
 dirfile.py

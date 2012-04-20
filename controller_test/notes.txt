@@ -1,1 +1,4 @@
 uthash <-> Redis <-- 0MQ ssh --> python GUI or mongrel2
+
+interface server supports zeromq ssh connections instead of tcp
+shelve db in server is replaced with redis
