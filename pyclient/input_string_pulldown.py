@@ -58,7 +58,7 @@ class InputStringPulldown(Pmw.MegaWidget, button_base.ButtonBase):
                         Pmw.OptionMenu, self.entrymethod.interior(),
                         labelpos='w',
                         label_text='type: ',
-                        items=self.items.values()
+                        items=self.items.values(),
                         hull_borderwidth=1,
                         menubutton_width=20,
                         hull_relief='ridge')

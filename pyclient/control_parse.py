@@ -1,21 +1,14 @@
-r"""
-\namespace control_parse
-Functions for parsing control dictionaries and lists
-\htmlonly
-read more about the control dictionary in
-<a href="control_dictionary.html">'Control Dictionary'</a></li>
-\endhtmlonly
-"""
+""" Functions for parsing control dictionaries and lists"""
 import types
 import shelve
 #from param import *
 
 
 def find_unique(listinput):
-    r"""
-    find the unique elements in a list
-    \param listinput python list with possible repeated entries
-    \return a list of unique elements from listinput"""
+    """find the unique elements in a list
+    param listinput python list with possible repeated entries
+    return a list of unique elements from listinput
+    """
     unique = []
     for item in listinput:
         if item not in unique:
@@ -24,18 +17,19 @@ def find_unique(listinput):
 
 
 def find_groups(dbinput, grpname):
-    r"""
+    """
     find list of unique system groups in the command db
     \param dbinput the dictionary or shelve object for the command db
     \param grpname a string for the keyname for the grouping
-    \return a list object of the group names
-         example:
-         find_groups(db,'system')
-         will return a list of the systems that can be controlled
-         TODO: add else exception for rec.has_key
+    return a list object of the group names
+
+    example:
+    find_groups(db, 'system')
+    will return a list of the systems that can be controlled
+    TODO: add else exception for rec.has_key
     """
     tags = []
-    for key in dbinput.keys():
+    for key in dbinput:
         if 'system' in dbinput[key]:
             rec = dbinput[key]
             if grpname in rec:
@@ -45,22 +39,23 @@ def find_groups(dbinput, grpname):
 
 
 def find_subgroups(dbinput, grpname, grp, subgrpname):
-    r"""
+    """
     take the control db and find the unique categories within a given group
     \param dbinput the dictionary or shelve object for the command db
     \param grpname a string for the keyname for the grouping
     \param grp a string that identifies that group
     \param subgrpname a string for the keyname of the subgroup or category
-    \return a list object of the category/subgroup names
-         example:
-         find_subgroups(db,'system','Housekeeping','category')
-         will generate a list of the different control categories in the
-         housekeeping system. (possible 'category' for controls in the database
-         for which system='housekeeping')
-         TODO: add else exception for rec.has_key's
+    return a list object of the category/subgroup names
+
+    example:
+    find_subgroups(db,'system','Housekeeping','category')
+    will generate a list of the different control categories in the
+    housekeeping system. (possible 'category' for controls in the database
+    for which system='housekeeping')
+    TODO: add else exception for rec.has_key's
     """
     tags = []
-    for key in dbinput.keys():
+    for key in dbinput:
         if 'system' in dbinput[key]:
             rec = dbinput[key]
             if grpname in rec and subgrpname in rec:
@@ -91,8 +86,8 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
     """
 
     info_out = None
-    for key in dbinput.keys():
-        if "system" in dbinput[key]:
+    for key in dbinput:
+        if 'system' in dbinput[key]:
             rec = dbinput[key]
             if entry_type_in in rec:
                 if rec[entry_type_in] == info_in:
@@ -104,8 +99,7 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
 
 
 def get_db_convert(shelvefilename, entry_type_in, info_in, entry_type_out):
-    r"""
-    lazy method to call db_convert
+    """lazy method to call db_convert
     \param shelvefilename shelve file containing the control database
     \param entry_type_in the type of entry to match
     \param info_in the desired value for that entry type
@@ -116,12 +110,12 @@ def get_db_convert(shelvefilename, entry_type_in, info_in, entry_type_out):
 
 
 def control_typecast(input_control, output_type):
-    r"""
-    typecast some input based on its control type
+    """ typecast some input based on its control type
     \param input_control the input quantity, either float, int, string
     \param output_type a string, either 'float', 'int', or 'string'
-    \return input recast as an output_type"""
-    output = input
+    return input recast as an output_type"""
+
+    output = input_control
     if (type(input_control) is types.IntType or \
        type(input_control) is types.FloatType) \
        and output_type == 'string':
@@ -143,7 +137,7 @@ def control_typecast(input_control, output_type):
 
 
 def find_controltype(short_name, shelvefilename):
-    r"""type of variable does ... control
+    """what type of variable does ... control
     this assumes that the type_list is one->one"""
 
     dbinput = shelve.open(shelvefilename, "r")
@@ -158,13 +152,13 @@ def find_controltype(short_name, shelvefilename):
 
 
 def find_commands(dbinput, grpname, grp, subgrpname, subgrp):
-    r"""for a given system and control category, list all available commands
+    """ for a given system and control category, list all available commands
     example:
     find_commands(db, 'system', 'housekeeping', 'cateogry', 'master')
     """
     tags = []
-    for key in dbinput.keys():
-        if "system" in dbinput[key]:
+    for key in dbinput:
+        if 'system' in dbinput[key]:
             rec = dbinput[key]
             if (grpname in rec) and (subgrpname in rec):
                 if rec[grpname] == grp and rec[subgrpname] == subgrp:
@@ -174,11 +168,10 @@ def find_commands(dbinput, grpname, grp, subgrpname, subgrp):
 
 
 def pare_pulldown(pulldowndb):
-    r"""
-    for a pulldown menu type, make a new dictionary with index: desription
-    """
+    """for a pulldown menu type, make a new dictionary with index:
+    desription"""
     out_dict = {}
-    for key in pulldowndb.keys():
+    for key in pulldowndb:
         try:
             #desc = key + " : " + pulldowndb[key]['label']
             desc = pulldowndb[key]['label']
@@ -189,9 +182,9 @@ def pare_pulldown(pulldowndb):
 
 
 def value_to_key(dict_in, value):
-    r"""find key for a given value"""
+    """find key for a given value"""
     tags = []
-    for key in dict_in.keys():
+    for key in dict_in:
         if dict_in[key].find(value) != -1:
             tags = tags + [key]
 
@@ -199,8 +192,7 @@ def value_to_key(dict_in, value):
 
 
 def flatten_string(string_in):
-    r"""
-    Flatten a string by replacing newlines with ^ and
+    """ Flatten a string by replacing newlines with ^ and
     spaces with &
     """
     output = string_in.replace("\n", "^")
@@ -209,9 +201,8 @@ def flatten_string(string_in):
 
 
 def unflatten_string(string_in):
-    r"""unflatten a string by replacing ^ with newline and
-    & with space
-    """
+    """ unflatten a string by replacing ^ with newline and
+    & with space"""
     output = string_in.replace("^", "\n")
     output = output.replace("&", " ")
     return output

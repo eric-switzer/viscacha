@@ -89,7 +89,7 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
     """
     info_out = None
     for key in dbinput:
-        if 'systems' in dbinput[key]:
+        if 'system' in dbinput[key]:
             rec = dbinput[key]
             if entry_type_in in rec:
                 if rec[entry_type_in] == info_in:
@@ -102,48 +102,50 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
 
 
 def get_db_convert(shelvefilename, entry_type_in, info_in, entry_type_out):
-    """ lazy method to call db_convert
+    """lazy method to call db_convert
     \param shelvefilename shelve file containing the control database
     \param entry_type_in the type of entry to match
     \param info_in the desired value for that entry type
     \param entry_type_out the type of information about the variable to output
     """
-    db = shelve.open(shelvefilename, "r")
-    return db_convert(db, entry_type_in, info_in, entry_type_out)
+    dbinput = shelve.open(shelvefilename, "r")
+    return db_convert(dbinput, entry_type_in, info_in, entry_type_out)
 
 
-def control_typecast(input, output_type):
+def control_typecast(input_control, output_type):
     """ typecast some input based on its control type
-     \param input the input quantity, either float, int, string
+    \param input_control the input quantity, either float, int, string
     \param output_type a string, either 'float', 'int', or 'string'
     return input recast as an output_type"""
 
-    output = input
-    if (type(input) is types.IntType or
-        type(input) is types.FloatType) and output_type == 'string':
-        return repr(input)
+    output = input_control
+    if (type(input_control) is types.IntType or \
+       type(input_control) is types.FloatType) \
+       and output_type == 'string':
+        return repr(input_control)
 
-    if type(input) is types.StringType and output_type == 'float':
-        return float(input)
+    if type(input_control) is types.StringType and output_type == 'float':
+        return float(input_control)
 
-    if type(input) is types.StringType and output_type == 'int':
-        return int(float(input))
+    if type(input_control) is types.StringType and output_type == 'int':
+        return int(float(input_control))
 
-    if type(input) is types.FloatType and output_type == 'int':
-        return int(input)
+    if type(input_control) is types.FloatType and output_type == 'int':
+        return int(input_control)
 
-    if type(input) is types.IntType and output_type == 'float':
-        return float(input)
+    if type(input_control) is types.IntType and output_type == 'float':
+        return float(input_control)
 
     return output
 
 
 def find_controltype(short_name, shelvefilename):
-    """ what type of variable does ... control
+    """what type of variable does ... control
     this assumes that the type_list is one->one"""
-    db = shelve.open(shelvefilename, "r")
+
+    dbinput = shelve.open(shelvefilename, "r")
     output = None
-    type_list = db['type_list']
+    type_list = dbinput['type_list']
     for key in type_list:
         rec = type_list[key]
         if short_name in rec:
@@ -161,7 +163,7 @@ def find_commands(dbinput, grpname, grp, subgrpname, subgrp):
     for key in dbinput:
         if 'system' in dbinput[key]:
             rec = dbinput[key]
-            if grpname in rec and subgrpname in rec:
+            if (grpname in rec) and (subgrpname in rec):
                 if rec[grpname] == grp and rec[subgrpname] == subgrp:
                     tags = tags + [rec]
 
@@ -174,12 +176,11 @@ def pare_pulldown(pulldowndb):
     out_dict = {}
     for key in pulldowndb:
         try:
-            keyval = key
             #desc = key + " : " + pulldowndb[key]['label']
             desc = pulldowndb[key]['label']
             out_dict[key] = desc
-        except:
-            None
+        except KeyError:
+            pass
     return out_dict
 
 
@@ -197,14 +198,14 @@ def flatten_string(string_in):
     """ Flatten a string by replacing newlines with ^ and
     spaces with &
     """
-    output = string.replace(string_in, "\n", "^")
-    output = string.replace(output, " ", "&")
+    output = string_in.replace("\n", "^")
+    output = output.replace(" ", "&")
     return output
 
 
 def unflatten_string(string_in):
     """ unflatten a string by replacing ^ with newline and
     & with space"""
-    output = string.replace(string_in, "^", "\n")
-    output = string.replace(output, "&", " ")
+    output = string_in.replace("^", "\n")
+    output = output.replace("&", " ")
     return output
