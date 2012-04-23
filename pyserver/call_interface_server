@@ -1,2 +1,0 @@
-#!/bin/bash
-/usr/bin/python /usr/src/python/interface_server/interface_server.py
