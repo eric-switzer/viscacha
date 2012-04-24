@@ -20,67 +20,67 @@ def compare_cmdorder(x, y):
 
 
 # make a selection - "Go"
-def input_select_name(cmditem, messagequeue, commandqueue, page):
+def input_select_func(cmditem, messagequeue, commandqueue, page):
     return input_select.InputSelect(cmditem, messagequeue, commandqueue, page)
 
 
 # Input an on/off signal
-def input_onoff_name(cmditem, messagequeue, commandqueue, page):
+def input_onoff_func(cmditem, messagequeue, commandqueue, page):
     return input_onoff.InputOnOff(cmditem, messagequeue, commandqueue, page)
 
 
 # Integer clicker
-def input_clicker_name(cmditem, messagequeue, commandqueue, page):
+def input_clicker_func(cmditem, messagequeue, commandqueue, page):
     return input_clicker.InputClicker(cmditem, messagequeue,
                                       commandqueue, page)
 
 
 # Pulldown selection menu
-def input_pulldown_name(cmditem, messagequeue, commandqueue, page):
+def input_pulldown_func(cmditem, messagequeue, commandqueue, page):
     return input_pulldown.InputPullDown(cmditem, messagequeue,
                                         commandqueue, page)
 
 
 # Slider to input floats
-def input_float_slider_name(cmditem, messagequeue, commandqueue, page):
+def input_float_slider_func(cmditem, messagequeue, commandqueue, page):
     return input_float_slider.InputFloatSlider(cmditem, messagequeue,
                                                commandqueue, page)
 
 
 # Input a float
-def input_float_name(cmditem, messagequeue, commandqueue, page):
+def input_float_func(cmditem, messagequeue, commandqueue, page):
     return input_float.InputFloat(cmditem, messagequeue,
                                   commandqueue, page)
 
 
 # Timer clicker method
-def input_timerclicker_name(cmditem, messagequeue, commandqueue, page):
+def input_timerclicker_func(cmditem, messagequeue, commandqueue, page):
     return input_timerclicker.InputTimerClicker(cmditem, messagequeue,
                                                 commandqueue, page)
 
 
 # input strings
-def input_string_name(cmditem, messagequeue, commandqueue, page):
+def input_string_func(cmditem, messagequeue, commandqueue, page):
     return input_string.InputString(cmditem, messagequeue,
                                     commandqueue, page)
 
 
 # input strings + pulldown options
-def input_string_pulldown_name(cmditem, messagequeue, commandqueue, page):
+def input_string_pulldown_func(cmditem, messagequeue, commandqueue, page):
     return input_string_pulldown.InputStringPulldown(cmditem, messagequeue,
                                                      commandqueue, page)
 
 
 type_switch = {
-    "input_select": input_select_name,
-    "input_onoff": input_onoff_name,
-    "input_clicker": input_clicker_name,
-    "input_pulldown": input_pulldown_name,
-    "input_float": input_float_name,
-    "input_float_slider": input_float_slider_name,
-    "input_timerclicker": input_timerclicker_name,
-    "input_string": input_string_name,
-    "input_string_pulldown": input_string_pulldown_name}
+    "input_select": input_select_func,
+    "input_onoff": input_onoff_func,
+    "input_clicker": input_clicker_func,
+    "input_pulldown": input_pulldown_func,
+    "input_float": input_float_func,
+    "input_float_slider": input_float_slider_func,
+    "input_timerclicker": input_timerclicker_func,
+    "input_string": input_string_func,
+    "input_string_pulldown": input_string_pulldown_func}
 
 
 class SystemControlWindow:

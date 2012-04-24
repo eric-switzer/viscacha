@@ -243,25 +243,25 @@ class ButtonBase(Pmw.MegaWidget):
     ##
     # refresh the button lock/value status
     # \param self member function
-    # \param type either 'lock', 'value', or 'reply'
-    # \param value for type='lock', either 'on' or 'off', otherwise new value
-    def refresh_button(self, type, value):
+    # \param refresh_type either 'lock', 'value', or 'reply'
+    # \param value for refresh_type='lock', either 'on' or 'off', otherwise new value
+    def refresh_button(self, refresh_type, value):
         """the server can perform several operations on the status of a button
          1. toggle the lock indicator
          2. set the current value label
          3. reply to a command (this sets the current value and unlocks)"""
-        if type == 'lock':
+        if refresh_type == 'lock':
             print self.announce + 'refreshing lock state to ' + value
             if value == 'on':
                 self.lockstate = True
             if value == 'off':
                 self.lockstate = False
             self._setlock()
-        if type == 'value':
+        if refresh_type == 'value':
             print self.announce + 'refreshing button value to ' + value
             self._currentdisplayaccess(value)
             self.switch_requested_value(value)
-        if type == 'reply':
+        if refresh_type == 'reply':
             print self.announce + 'reply received from the server: ' + value
             self._currentdisplayaccess(value)
             self.switch_requested_value(value)

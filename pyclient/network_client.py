@@ -133,7 +133,7 @@ class ClientNetworkInterface(object):
         # try to parse the incoming stream from the server
         # if it fails, just print it
         try:
-            self.gui.IncomingStream()
+            self.gui.incoming_stream()
         except AttributeError:
             while self.messagequeue.qsize():
                 try:
