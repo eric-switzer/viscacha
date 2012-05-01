@@ -20,55 +20,48 @@ def compare_cmdorder(x, y):
 
 
 # make a selection - "Go"
-def input_select_func(cmditem, messagequeue, commandqueue, page):
-    return input_select.InputSelect(cmditem, messagequeue, commandqueue, page)
+def input_select_func(cmditem, page):
+    return input_select.InputSelect(cmditem, page)
 
 
 # Input an on/off signal
-def input_onoff_func(cmditem, messagequeue, commandqueue, page):
-    return input_onoff.InputOnOff(cmditem, messagequeue, commandqueue, page)
+def input_onoff_func(cmditem, page):
+    return input_onoff.InputOnOff(cmditem, page)
 
 
 # Integer clicker
-def input_clicker_func(cmditem, messagequeue, commandqueue, page):
-    return input_clicker.InputClicker(cmditem, messagequeue,
-                                      commandqueue, page)
+def input_clicker_func(cmditem, page):
+    return input_clicker.InputClicker(cmditem, page)
 
 
 # Pulldown selection menu
-def input_pulldown_func(cmditem, messagequeue, commandqueue, page):
-    return input_pulldown.InputPullDown(cmditem, messagequeue,
-                                        commandqueue, page)
+def input_pulldown_func(cmditem, page):
+    return input_pulldown.InputPullDown(cmditem, page)
 
 
 # Slider to input floats
-def input_float_slider_func(cmditem, messagequeue, commandqueue, page):
-    return input_float_slider.InputFloatSlider(cmditem, messagequeue,
-                                               commandqueue, page)
+def input_float_slider_func(cmditem, page):
+    return input_float_slider.InputFloatSlider(cmditem, page)
 
 
 # Input a float
-def input_float_func(cmditem, messagequeue, commandqueue, page):
-    return input_float.InputFloat(cmditem, messagequeue,
-                                  commandqueue, page)
+def input_float_func(cmditem, page):
+    return input_float.InputFloat(cmditem, page)
 
 
 # Timer clicker method
-def input_timerclicker_func(cmditem, messagequeue, commandqueue, page):
-    return input_timerclicker.InputTimerClicker(cmditem, messagequeue,
-                                                commandqueue, page)
+def input_timerclicker_func(cmditem, page):
+    return input_timerclicker.InputTimerClicker(cmditem, page)
 
 
 # input strings
-def input_string_func(cmditem, messagequeue, commandqueue, page):
-    return input_string.InputString(cmditem, messagequeue,
-                                    commandqueue, page)
+def input_string_func(cmditem, page):
+    return input_string.InputString(cmditem, page)
 
 
 # input strings + pulldown options
-def input_string_pulldown_func(cmditem, messagequeue, commandqueue, page):
-    return input_string_pulldown.InputStringPulldown(cmditem, messagequeue,
-                                                     commandqueue, page)
+def input_string_pulldown_func(cmditem, page):
+    return input_string_pulldown.InputStringPulldown(cmditem, page)
 
 
 type_switch = {
@@ -84,10 +77,8 @@ type_switch = {
 
 
 class SystemControlWindow:
-    def __init__(self, parent, db, messagequeue, commandqueue, sysname):
+    def __init__(self, parent, db, sysname):
         self.announce = 'SystemControlWindow: '
-        self.messagequeue = messagequeue
-        self.commandqueue = commandqueue
         Pmw.Color.changecolor(parent, background='#3E5D75',
                               foreground='#FFFFFF')
 
@@ -115,8 +106,7 @@ class SystemControlWindow:
                 #   cmditem['category'] == category_item:
                 #print category_item + " " + repr(cmditem)
                 self.command_hierarchy[cmditem['short_name']] = \
-                    type_switch.get(cmditem['type'])(cmditem,
-                                    self.messagequeue, self.commandqueue, page)
+                    type_switch.get(cmditem['type'])(cmditem, page)
 
                 self.command_hierarchy[cmditem['short_name']].pack(side=Tkinter.TOP, anchor=Tkinter.W)
                 # to pass options not in the command specification (cmditem)
@@ -129,8 +119,6 @@ class SystemControlWindow:
             for cmditem in cmdtag:
                 if cmditem['edit_level'] == 1:
                     self.command_hierarchy[cmditem['short_name']].flattenentry()
-        # put in a refresh order
-        self.commandqueue.put('refresh')
 
     def refresh_system(self, msg):
         # take everything following, and including the GUI_MESSAGE tag and
