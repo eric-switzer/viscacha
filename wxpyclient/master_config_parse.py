@@ -3,6 +3,7 @@ except ImportError: import json
 import tempfile
 import urllib2
 
+
 def _decode_list(data):
     r"""convert native json unicode to str"""
     rv = []
@@ -15,6 +16,7 @@ def _decode_list(data):
             item = _decode_dict(item)
         rv.append(item)
     return rv
+
 
 def _decode_dict(data):
     r"""convert native json unicode to str"""
@@ -31,6 +33,7 @@ def _decode_dict(data):
         rv[key] = value
     return rv
 
+
 def load_json_over_http(url):
     req = urllib2.Request(url)
     opener = urllib2.build_opener()
@@ -38,6 +41,7 @@ def load_json_over_http(url):
     retjson = json.load(fp_url, object_hook=_decode_dict)
 
     return retjson
+
 
 def load_json_over_http_file(url):
     r"""alternate implementation which writes a file"""
@@ -56,5 +60,5 @@ def load_json_over_http_file(url):
 
     return retjson
 
-master_config = load_json_over_http("http://www.cita.utoronto.ca/~eswitzer/master.json")
-print master_config
+#master_config = load_json_over_http("http://www.cita.utoronto.ca/~eswitzer/master.json")
+#print master_config

@@ -1,5 +1,9 @@
+import time
+import os
 import wx
 import wx.stc as stc
+import datetime
+import shlex
 from wx.lib.pubsub import Publisher
 
 
@@ -76,10 +80,17 @@ class LogPanel(wx.Panel):
             btn.Bind(wx.EVT_BUTTON, self.OnButton)
 
         self.SetSizer(sizer)
-        Publisher().subscribe(self.updateDisplay, "redis_incoming")
+        Publisher().subscribe(self.updateDisplay, "redis_monitor")
 
     def updateDisplay(self, msg):
-        self.log('\nchannel=%s msg=%s' % (msg.topic[0], msg.data), "black")
+        #self.log('\nchannel=%s msg=%s' % (msg.topic[0], msg.data), "black")
+        monitor_msg = msg.data
+        ctime = monitor_msg['time']
+        formatted = datetime.datetime.fromtimestamp(monitor_msg['time'])
+        timestamp = formatted.strftime('%Y-%m-%d %H:%M')
+        message = monitor_msg['command']
+        message = " ".join(shlex.split(message))
+        self.log("%s > %s\n" % (timestamp, message), "black")
 
     def OnMouse(self, event, type):
         self.log('\n%s Mouse Button Clicked'%type, self.colour)
