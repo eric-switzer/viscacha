@@ -5,8 +5,6 @@ import time
 import network_client
 import control_tabs
 import control_parse
-import master_config_parse
-import log_panel
 from threading import Thread
 from wx.lib.pubsub import Publisher
 
@@ -19,9 +17,7 @@ class MainWindow(wx.Frame):
     def __init__(self, parent=None, id=-1):
         # get the JSON configuration file
         configaddr = "http://www.cita.utoronto.ca/~eswitzer/master.json"
-        config = master_config_parse.load_json_over_http(configaddr)
-        self.systems = control_parse.find_groups(config, "system")
-        print "systems registered: " + repr(self.systems)
+        self.config = control_parse.ControlSpec(configaddr)
 
         # start the redis server connection
         self.pool = redis.ConnectionPool(host="localhost", port=6379, db=0)
@@ -76,8 +72,8 @@ class MainWindow(wx.Frame):
 
         filemenu.AppendItem(quit)
 
-        n_systems = len(self.systems)
-        for (system_item, sys_num) in zip(self.systems,
+        n_systems = len(self.config.system_list())
+        for (system_item, sys_num) in zip(self.config.system_list(),
                                           range(101, 101 + 2 * n_systems, 2)):
 
             self.event_dispatch[sys_num] = [system_item, False]
@@ -119,6 +115,5 @@ class MainWindow(wx.Frame):
 if __name__ == "__main__":
     app = wx.App()
     win = MainWindow().Show(True)
-    win = log_panel.LoggerFrame().Show()
     #control_tabs.ControlTabs("Housekeeping").Show()
     app.MainLoop()

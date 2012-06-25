@@ -1,6 +1,7 @@
 """ Functions for parsing control dictionaries and lists"""
 import types
 import shelve
+import master_config_parse
 
 
 def find_unique(seq):
@@ -13,52 +14,105 @@ def find_unique(seq):
     return [ x for x in seq if x not in seen and not seen.add(x)]
 
 
-def find_groups(dbinput, grpname):
-    """
-    find list of unique system groups in the command db
-    `dbinput` the dictionary or shelve object for the command db
-    `grpname` a string for the keyname for the grouping
-    return a list object of the group names
+def print_treedict(tree, depth = 0):
+    if tree == None or len(tree) == 0:
+        print "\t" * depth, "-"
+    else:
+        try:
+            for key, val in tree.iteritems():
+                print "\t" * depth + "-->", key
+                print_treedict(val, depth + 1)
+        except AttributeError:
+            try:
+                for val in tree:
+                    print "\t" * depth, val
+            except:
+                print "\t" * depth, tree
 
-    example:
-    find_groups(db, 'system')
-    will return a list of the systems that can be controlled
-    """
-    tags = []
-    for key in dbinput:
-        if 'system' in dbinput[key]:
-            rec = dbinput[key]
-            if grpname in rec:
-                item = rec[grpname]
-                tags = tags + [item]
-    return find_unique(tags)
+class ControlSpec(object):
+    r"""Handle the control specification db"""
+    def __init__(self, configaddr):
+        self.configaddr = configaddr
+        self.configdb = master_config_parse.load_json_over_http(configaddr)
+        self.build_system_tree()
+        print_treedict(self.system_tree)
 
+    def build_system_tree(self):
+        r"""construct the dictionary of systems, subsystems, commands"""
+        self.system_tree = {}
+        treetitle = "System tree specified in: " + self.configaddr
+        print treetitle + "\n" + "-" * len(treetitle)
 
-def find_subgroups(dbinput, grpname, grp, subgrpname):
-    """
-    take the control db and find the unique categories within a given group
-    \param dbinput the dictionary or shelve object for the command db
-    \param grpname a string for the keyname for the grouping
-    \param grp a string that identifies that group
-    \param subgrpname a string for the keyname of the subgroup or category
-    return a list object of the category/subgroup names
+        for key, conf_entry in self.configdb.iteritems():
+            if 'system' in conf_entry:
+                try:
+                    sysname = conf_entry['system']
+                    subsysname = conf_entry['category']
+                except KeyError:
+                    print "%s had not system/subsys" % key
+                    continue
 
-    example:
-    find_subgroups(db,'system','Housekeeping','category')
-    will generate a list of the different control categories in the
-    housekeeping system. (possible 'category' for controls in the database
-    for which system='housekeeping')
-    TODO: add else exception for rec.has_key's
-    """
-    tags = []
-    for key in dbinput:
-        if 'system' in dbinput[key]:
-            rec = dbinput[key]
-            if grpname in rec and subgrpname in rec:
-                if rec[grpname] == grp:
-                    item = rec[subgrpname]
-                    tags = tags + [item]
-    return find_unique(tags)
+                if sysname not in self.system_tree:
+                    self.system_tree[sysname] = {}
+
+                if subsysname not in self.system_tree[sysname]:
+                    self.system_tree[sysname][subsysname] = []
+
+                if key not in self.system_tree[sysname][subsysname]:
+                    if key not in self.system_tree[sysname][subsysname]:
+                        self.system_tree[sysname][subsysname].append(key)
+                    else:
+                        print "duplicate key: %s" % key
+
+    def system_list(self):
+        return self.system_tree.keys()
+
+    def find_groups(self, grpname="system"):
+        """
+        find list of unique system groups in the command db
+        `dbinput` the dictionary or shelve object for the command db
+        `grpname` a string for the keyname for the grouping
+        return a list object of the group names
+
+        example:
+        find_groups(db, 'system')
+        will return a list of the systems that can be controlled
+        """
+        tags = []
+        for key in self.configdb:
+            if 'system' in self.configdb[key]:
+                rec = self.configdb[key]
+                if grpname in rec:
+                    item = rec[grpname]
+                    tags.append(item)
+
+        return find_unique(tags)
+
+    def find_subgroups(dbinput, grpname, grp, subgrpname):
+        """
+        take the control db and find the unique categories within a given group
+        `dbinput`: the dictionary or shelve object for the command db
+        `grpname`: a string for the keyname for the grouping
+        `grp`: a string that identifies that group
+        `subgrpname`: a string for the keyname of the subgroup or category
+        return a list object of the category/subgroup names
+
+        example:
+        find_subgroups(db,'system','Housekeeping','category')
+        will generate a list of the different control categories in the
+        housekeeping system. (possible 'category' for controls in the database
+        for which system='housekeeping')
+        TODO: add else exception for rec.has_key's
+        """
+        tags = []
+        for key in dbinput:
+            if 'system' in dbinput[key]:
+                rec = dbinput[key]
+                if grpname in rec and subgrpname in rec:
+                    if rec[grpname] == grp:
+                        item = rec[subgrpname]
+                        tags = tags + [item]
+        return find_unique(tags)
 
 
 def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
@@ -75,10 +129,10 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
     will tell you for the control variable with short_name='relay3000',
     what the destination is.
 
-    \param dbinput the dictionary or shelve object for the command db
-    \param entry_type_in the type of entry to match
-    \param info_in the desired value for that entry type
-    \param entry_type_out the type of info about the variable to output
+    `dbinput`: the dictionary or shelve object for the command db
+    `entry_type_in`: the type of entry to match
+    `info_in`: the desired value for that entry type
+    `entry_type_out`: the type of info about the variable to output
     """
 
     info_out = None
@@ -96,10 +150,10 @@ def db_convert(dbinput, entry_type_in, info_in, entry_type_out):
 
 def get_db_convert(shelvefilename, entry_type_in, info_in, entry_type_out):
     """lazy method to call db_convert
-    \param shelvefilename shelve file containing the control database
-    \param entry_type_in the type of entry to match
-    \param info_in the desired value for that entry type
-    \param entry_type_out the type of information about the variable to output
+    `shelvefilename`: shelve file containing the control database
+    `entry_type_in`: the type of entry to match
+    `info_in`: the desired value for that entry type
+    `entry_type_out`: the type of information about the variable to output
     """
     dbinput = shelve.open(shelvefilename, "r")
     return db_convert(dbinput, entry_type_in, info_in, entry_type_out)
@@ -107,8 +161,8 @@ def get_db_convert(shelvefilename, entry_type_in, info_in, entry_type_out):
 
 def control_typecast(input_control, output_type):
     """ typecast some input based on its control type
-    \param input_control the input quantity, either float, int, string
-    \param output_type a string, either 'float', 'int', or 'string'
+    `input_control`: the input quantity, either float, int, string
+    `output_type`: a string, either 'float', 'int', or 'string'
     return input recast as an output_type"""
 
     output = input_control
@@ -175,33 +229,6 @@ def pare_pulldown(pulldowndb):
         except KeyError:
             pass
     return out_dict
-
-
-def value_to_key(dict_in, value):
-    """find key for a given value"""
-    tags = []
-    for key in dict_in:
-        if dict_in[key].find(value) != -1:
-            tags = tags + [key]
-
-    return tags
-
-
-def flatten_string(string_in):
-    """ Flatten a string by replacing newlines with ^ and
-    spaces with &
-    """
-    output = string_in.replace("\n", "^")
-    output = output.replace(" ", "&")
-    return output
-
-
-def unflatten_string(string_in):
-    """ unflatten a string by replacing ^ with newline and
-    & with space"""
-    output = string_in.replace("^", "\n")
-    output = output.replace("&", " ")
-    return output
 
 
 if __name__ == "__main__":
