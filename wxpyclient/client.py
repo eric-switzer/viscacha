@@ -9,6 +9,42 @@ from threading import Thread
 from wx.lib.pubsub import Publisher
 
 
+class SubsystemTab(wx.Panel):
+    def __init__(self, parent, config, system_name, subsystem_name):
+        self.config = config
+        wx.Panel.__init__(self, parent)
+        self.command_list = config.command_list(system_name, subsystem_name)
+        num_command = len(self.command_list)
+
+        sizer = wx.GridBagSizer(1, num_command)
+
+        for (command_item, idx) in zip(self.command_list, range(num_command)):
+            sizer.Add(wx.StaticText(self, -1, command_item), (idx,0), (1,1), wx.EXPAND)
+
+        self.SetSizerAndFit(sizer)
+        self.Centre()
+
+        #t = wx.StaticText(self, -1, "This is a PageOne object", (20,20))
+
+
+class SystemFrame(wx.Frame):
+    def __init__(self, config, system_name, commanding):
+        wx.Frame.__init__(self, wx.GetApp().TopWindow, title=system_name)
+
+        subsystem_list = config.subsystem_list(system_name)
+
+        p = wx.Panel(self)
+        nb = wx.Notebook(p)
+
+        for subsystem in subsystem_list:
+            nb.AddPage(SubsystemTab(nb, config, system_name, subsystem),
+                       subsystem)
+
+        sizer = wx.BoxSizer()
+        sizer.Add(nb, 1, wx.EXPAND)
+        p.SetSizer(sizer)
+
+
 class MainWindow(wx.Frame):
     r"""This is the main window for the client and spawns all other processes
     and windows
@@ -17,7 +53,8 @@ class MainWindow(wx.Frame):
     def __init__(self, parent=None, id=-1):
         # get the JSON configuration file
         configaddr = "http://www.cita.utoronto.ca/~eswitzer/master.json"
-        self.config = control_parse.ControlSpec(configaddr)
+        self.config = control_parse.ControlSpec(configaddr=configaddr,
+                                                silent=False)
 
         # start the redis server connection
         self.pool = redis.ConnectionPool(host="localhost", port=6379, db=0)
@@ -36,8 +73,8 @@ class MainWindow(wx.Frame):
 
         # start a subscription for this client to receive messages from redis
         self.acksub = network_client.RedisSubscribe(self.pool, self.client_id,
-                                                 subname="housekeeping_ack",
-                                                 pubchan="redis_incoming")
+                                                subname="housekeeping_ack",
+                                                pubchan="redis_incoming")
 
         # start a thread which simply runs redis "monitor" and prints the text
         self.redmon = network_client.RedisMonitor(self.pool, self.client_id)
@@ -53,8 +90,11 @@ class MainWindow(wx.Frame):
 
     def build_buttons(self):
         sizer = wx.GridBagSizer(3, 2)
+        # Issue a command to grab all the current variable states.
         sizer.Add(wx.Button(self.panel, -1, 'Refresh'), (0,0), (1,1), wx.EXPAND)
+        # See which GUI clients are connected to the server
         sizer.Add(wx.Button(self.panel, -1, 'Who'), (0,1), (1,1), wx.EXPAND)
+        # Enter a comment in the logfile
         sizer.Add(wx.Button(self.panel, -1, 'Send comment'), (0,2), (1,1), wx.EXPAND)
         sizer.Add(wx.TextCtrl(self), (1,0), (1,3), wx.EXPAND)
         self.SetSizerAndFit(sizer)
@@ -104,16 +144,22 @@ class MainWindow(wx.Frame):
         self.redis_conn.publish(self.client_id, "terminate")
         # wait for the threads to die before disconnecting
         time.sleep(0.1)
+        # un-register this client connection and disconnect
         self.redis_conn.lrem("gui_clients", self.client_id, 1)
         self.pool.disconnect()
+        # now close the GUI
         self.Close()
 
     def on_cmdwindow(self, event):
-        print self.event_dispatch[event.GetId()]
+        (system_name, commanding) = tuple(self.event_dispatch[event.GetId()])
+        sysframe = SystemFrame(self.config, system_name, commanding)
+        sysframe.Show(True)
 
 
 if __name__ == "__main__":
     app = wx.App()
-    win = MainWindow().Show(True)
+    win = MainWindow()
+    win.Show(True)
+    app.SetTopWindow(win)
     #control_tabs.ControlTabs("Housekeeping").Show()
     app.MainLoop()
