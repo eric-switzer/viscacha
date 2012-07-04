@@ -97,7 +97,7 @@ class ControlSpec(object):
             print_treedict(self.system_tree)
 
     def build_system_tree(self, grpname="system", subgrpname="category"):
-        r"""construct the dictionary of systems, subsystems, commands"""
+        r"""construct the dictionary of systems, subsystems, variables"""
         self.system_tree = {}
 
         for key, conf_entry in self.configdb.iteritems():
@@ -121,17 +121,21 @@ class ControlSpec(object):
                     else:
                         print "duplicate key: %s" % key
 
+    # convenience functions
     def system_list(self):
         return self.system_tree.keys()
+
+    def all_variables(self):
+        return self.configdb.keys()
 
     def subsystem_list(self, system):
         return self.system_tree[system].keys()
 
-    def command_list(self, system, subsystem):
+    def variable_list(self, system, subsystem):
         return self.system_tree[system][subsystem]
 
-    def command_dict(self, command_key):
-        return self.configdb[command_key]
+    def variable_dict(self, variable_key):
+        return self.configdb[variable_key]
 
 if __name__ == "__main__":
     import doctest

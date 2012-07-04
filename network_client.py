@@ -11,14 +11,12 @@ import pyredis_monitor
 class RedisSubscribe(threading.Thread):
     """Connect to redis and subscribe to a channel, wx-publishing msg"""
     def __init__(self, pool, client_id,
-                 subname="housekeeping_ack",
-                 pubchan="redis_incoming"):
+                 subname="housekeeping_ack"):
         """
         `pool`: the redis connection pool for this instance
         `client_id`: identifier that allows the server to send information
                 to this specific client.
         `subname`: subscriber channel on the redis server for the thread
-        `pubchan`: publisher channel within wxwindows for GUI events
         """
         threading.Thread.__init__(self)
         self.pool = pool
@@ -29,7 +27,6 @@ class RedisSubscribe(threading.Thread):
         self.redis_pubsub = self.redis_conn.pubsub()
         # subscribe to both the general and specific client channels
         self.redis_pubsub.subscribe([subname, self.client_id])
-        self.pubchan = pubchan
         self.start()
 
     def run(self):
@@ -38,22 +35,30 @@ class RedisSubscribe(threading.Thread):
             self.handle_msg(msg)
 
     def handle_msg(self, msg):
-        # handle messages specific to this client
-        if msg['channel'] == self.client_id:
+        r"""Do simple parsin of the message from the server"""
+        if (msg['channel'] == self.client_id) or \
+           (msg['channel'] == self.subname):
             # if the server tells the client to terminate its connection
             if msg['data'] == 'terminate':
                 self.redis_pubsub.unsubscribe()
             else:
-                wx.CallAfter(self.postmsg, msg)
+                try:
+                    data = msg['data'].split()
+                    print data
+                    if len(data) == 2:
+                        channel = data[0]
+                        value = data[1]
 
-        # handle general messages
-        if msg['channel'] == self.subname:
-            print msg['data']
-            wx.CallAfter(self.postmsg, msg)
+                    msg = (channel, value)
+
+                    wx.CallAfter(self.postmsg, msg)
+                except:
+                    pass
 
     def postmsg(self, msg):
         """Send time to GUI"""
-        Publisher().sendMessage(self.pubchan, msg)
+        (channel, command) = msg
+        Publisher().sendMessage(channel, command)
 
 
 class RedisMonitor(threading.Thread):
@@ -87,10 +92,13 @@ class RedisMonitor(threading.Thread):
 
         # if the server sends a termination signal to this client,
         # handle_message goes False and the thread dies
-        if (message_parse[0] == "PUBLISH") and \
+        if (message_parse[0].lower() == "publish") and \
            (message_parse[1] == self.client_id) and \
            (message_parse[2] == "terminate"):
             return False
         else:
-            print "%s > %s" % (timestamp, message)
+            # ignore get requests (noise)
+            if message_parse[0].lower() != "get":
+                print "%s > %s" % (timestamp, message)
+
             return True

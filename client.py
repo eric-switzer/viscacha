@@ -7,6 +7,7 @@ import control_tabs
 import control_parse
 from threading import Thread
 import client_gui
+from wx.lib.pubsub import Publisher
 
 class MainWindow(wx.Frame):
     r"""This is the main window for the client and spawns all other processes
@@ -36,8 +37,7 @@ class MainWindow(wx.Frame):
 
         # start a subscription for this client to receive messages from redis
         self.acksub = network_client.RedisSubscribe(self.pool, self.client_id,
-                                                subname="housekeeping_ack",
-                                                pubchan="redis_incoming")
+                                                subname="housekeeping_ack")
 
         # start a thread which simply runs redis "monitor" and prints the text
         self.redmon = network_client.RedisMonitor(self.pool, self.client_id)
@@ -54,14 +54,16 @@ class MainWindow(wx.Frame):
     def build_buttons(self):
         sizer = wx.GridBagSizer(3, 2)
         # Issue a command to grab all the current variable states.
-        sizer.Add(wx.Button(self.panel, -1, 'Refresh'), (0,0), (1,1), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 1, 'Refresh'), (0,0), (1,1), wx.EXPAND)
         # See which GUI clients are connected to the server
-        sizer.Add(wx.Button(self.panel, -1, 'Who'), (0,1), (1,1), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 2, 'Who'), (0,1), (1,1), wx.EXPAND)
         # Enter a comment in the logfile
-        sizer.Add(wx.Button(self.panel, -1, 'Send comment'), (0,2), (1,1), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 3, 'Send comment'), (0,2), (1,1), wx.EXPAND)
         sizer.Add(wx.TextCtrl(self), (1,0), (1,3), wx.EXPAND)
         self.SetSizerAndFit(sizer)
         self.Centre()
+
+        self.Bind(wx.EVT_BUTTON, self.on_refresh, id=1)
 
     def build_menu(self):
         menubar = wx.MenuBar()
@@ -115,8 +117,30 @@ class MainWindow(wx.Frame):
 
     def on_cmdwindow(self, event):
         (system_name, commanding) = tuple(self.event_dispatch[event.GetId()])
-        sysframe = client_gui.SystemFrame(self.config, system_name, commanding)
+        sysframe = client_gui.SystemFrame(self.config, system_name,
+                                          commanding, self.redis_conn)
+
         sysframe.Show(True)
+        # now push current values to all of the clients
+        self.on_refresh(0)
+
+    def on_refresh(self, event):
+        print "GUI: refreshing all variables relative to the server"
+        pipe = self.redis_conn.pipeline()
+        varlist = []
+        for sys_variable in self.config.all_variables():
+            varlist.append(sys_variable)
+            pipe.get(sys_variable)
+
+        values = pipe.execute()
+        for (varname, val) in zip(varlist, values):
+            if val is not None:
+                # this does not need wx.CallAfter
+                Publisher().sendMessage(varname, val)
+            else:
+                print "%s not yet known on server; setting to default" % varname
+                # TODO: fix this
+                #self.redis_conn.set(self.name, cmd_config['default'])
 
 
 if __name__ == "__main__":
