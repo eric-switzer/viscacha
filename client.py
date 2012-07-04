@@ -1,13 +1,13 @@
+"""A wxpython GUI for commanding/monitoring through a redis intermediary"""
 import os
 import wx
 import redis
 import time
 import network_client
-import control_tabs
 import control_parse
-from threading import Thread
 import client_gui
 from wx.lib.pubsub import Publisher
+
 
 class MainWindow(wx.Frame):
     r"""This is the main window for the client and spawns all other processes
@@ -52,30 +52,39 @@ class MainWindow(wx.Frame):
         self.build_buttons()
 
     def build_buttons(self):
+        r"""Put buttons on the main server window"""
         sizer = wx.GridBagSizer(3, 2)
+
         # Issue a command to grab all the current variable states.
-        sizer.Add(wx.Button(self.panel, 1, 'Refresh'), (0,0), (1,1), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 1, 'Refresh'),
+                  (0, 0), (1, 1), wx.EXPAND)
+
         # See which GUI clients are connected to the server
-        sizer.Add(wx.Button(self.panel, 2, 'Who'), (0,1), (1,1), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 2, 'Who'),
+                  (0, 1), (1, 1), wx.EXPAND)
+
         # Enter a comment in the logfile
-        sizer.Add(wx.Button(self.panel, 3, 'Send comment'), (0,2), (1,1), wx.EXPAND)
-        sizer.Add(wx.TextCtrl(self), (1,0), (1,3), wx.EXPAND)
+        sizer.Add(wx.Button(self.panel, 3, 'Send comment'),
+                  (0, 2), (1, 1), wx.EXPAND)
+
+        sizer.Add(wx.TextCtrl(self), (1, 0), (1, 3), wx.EXPAND)
         self.SetSizerAndFit(sizer)
         self.Centre()
 
         self.Bind(wx.EVT_BUTTON, self.on_refresh, id=1)
 
     def build_menu(self):
+        r"""Build the menu bar (file and command/monitor windows)"""
         menubar = wx.MenuBar()
         filemenu = wx.Menu()
         monitormenu = wx.Menu()
         commandmenu = wx.Menu()
 
         filemenu.AppendSeparator()
-        quit = wx.MenuItem(filemenu, 100, '&Quit\tCtrl+Q',
+        quit_item = wx.MenuItem(filemenu, 100, '&Quit\tCtrl+Q',
                            'Quit the Application')
 
-        filemenu.AppendItem(quit)
+        filemenu.AppendItem(quit_item)
 
         n_systems = len(self.config.system_list())
         for (system_item, sys_num) in zip(self.config.system_list(),
@@ -89,7 +98,7 @@ class MainWindow(wx.Frame):
                                                 menudesc))
 
             menudesc = "Open commanding window for %s" % system_item
-            commandmenu.AppendItem(wx.MenuItem(commandmenu, sys_num+1,
+            commandmenu.AppendItem(wx.MenuItem(commandmenu, sys_num + 1,
                                                '&%s' % system_item,
                                                 menudesc))
 
@@ -106,6 +115,7 @@ class MainWindow(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_quit, id=100)
 
     def on_quit(self, event):
+        r"""shutdown connections and leave the client"""
         self.redis_conn.publish(self.client_id, "terminate")
         # wait for the threads to die before disconnecting
         time.sleep(0.1)
@@ -116,6 +126,7 @@ class MainWindow(wx.Frame):
         self.Close()
 
     def on_cmdwindow(self, event):
+        r"""open a new commanding/monitor window from the menu bar"""
         (system_name, commanding) = tuple(self.event_dispatch[event.GetId()])
         sysframe = client_gui.SystemFrame(self.config, system_name,
                                           commanding, self.redis_conn)
@@ -125,9 +136,13 @@ class MainWindow(wx.Frame):
         self.on_refresh(0)
 
     def on_refresh(self, event):
+        r"""Issue a pipelined stack of 'get's to redis to find all variable
+        states on the server"""
+
         print "GUI: refreshing all variables relative to the server"
         pipe = self.redis_conn.pipeline()
         varlist = []
+
         for sys_variable in self.config.all_variables():
             varlist.append(sys_variable)
             pipe.get(sys_variable)
@@ -138,15 +153,15 @@ class MainWindow(wx.Frame):
                 # this does not need wx.CallAfter
                 Publisher().sendMessage(varname, val)
             else:
-                print "%s not yet known on server; setting to default" % varname
+                print "%s unknown on server; setting to default" % varname
                 # TODO: fix this
                 #self.redis_conn.set(self.name, cmd_config['default'])
 
 
 if __name__ == "__main__":
-    app = wx.App()
-    win = MainWindow()
-    win.Show(True)
-    app.SetTopWindow(win)
+    client_app = wx.App()
+    main_win = MainWindow()
+    main_win.Show(True)
+    client_app.SetTopWindow(main_win)
     #control_tabs.ControlTabs("Housekeeping").Show()
-    app.MainLoop()
+    client_app.MainLoop()
