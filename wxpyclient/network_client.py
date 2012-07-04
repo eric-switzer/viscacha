@@ -23,6 +23,7 @@ class RedisSubscribe(threading.Thread):
         threading.Thread.__init__(self)
         self.pool = pool
         self.client_id = client_id
+        self.subname = subname
         self.redis_conn = redis.Redis(connection_pool=self.pool)
 
         self.redis_pubsub = self.redis_conn.pubsub()
@@ -37,12 +38,18 @@ class RedisSubscribe(threading.Thread):
             self.handle_msg(msg)
 
     def handle_msg(self, msg):
+        # handle messages specific to this client
         if msg['channel'] == self.client_id:
             # if the server tells the client to terminate its connection
             if msg['data'] == 'terminate':
                 self.redis_pubsub.unsubscribe()
             else:
                 wx.CallAfter(self.postmsg, msg)
+
+        # handle general messages
+        if msg['channel'] == self.subname:
+            print msg['data']
+            wx.CallAfter(self.postmsg, msg)
 
     def postmsg(self, msg):
         """Send time to GUI"""

@@ -130,6 +130,8 @@ class ControlSpec(object):
     def command_list(self, system, subsystem):
         return self.system_tree[system][subsystem]
 
+    def command_dict(self, command_key):
+        return self.configdb[command_key]
 
 if __name__ == "__main__":
     import doctest

@@ -6,44 +6,7 @@ import network_client
 import control_tabs
 import control_parse
 from threading import Thread
-from wx.lib.pubsub import Publisher
-
-
-class SubsystemTab(wx.Panel):
-    def __init__(self, parent, config, system_name, subsystem_name):
-        self.config = config
-        wx.Panel.__init__(self, parent)
-        self.command_list = config.command_list(system_name, subsystem_name)
-        num_command = len(self.command_list)
-
-        sizer = wx.GridBagSizer(1, num_command)
-
-        for (command_item, idx) in zip(self.command_list, range(num_command)):
-            sizer.Add(wx.StaticText(self, -1, command_item), (idx,0), (1,1), wx.EXPAND)
-
-        self.SetSizerAndFit(sizer)
-        self.Centre()
-
-        #t = wx.StaticText(self, -1, "This is a PageOne object", (20,20))
-
-
-class SystemFrame(wx.Frame):
-    def __init__(self, config, system_name, commanding):
-        wx.Frame.__init__(self, wx.GetApp().TopWindow, title=system_name)
-
-        subsystem_list = config.subsystem_list(system_name)
-
-        p = wx.Panel(self)
-        nb = wx.Notebook(p)
-
-        for subsystem in subsystem_list:
-            nb.AddPage(SubsystemTab(nb, config, system_name, subsystem),
-                       subsystem)
-
-        sizer = wx.BoxSizer()
-        sizer.Add(nb, 1, wx.EXPAND)
-        p.SetSizer(sizer)
-
+import client_gui
 
 class MainWindow(wx.Frame):
     r"""This is the main window for the client and spawns all other processes
@@ -152,7 +115,7 @@ class MainWindow(wx.Frame):
 
     def on_cmdwindow(self, event):
         (system_name, commanding) = tuple(self.event_dispatch[event.GetId()])
-        sysframe = SystemFrame(self.config, system_name, commanding)
+        sysframe = client_gui.SystemFrame(self.config, system_name, commanding)
         sysframe.Show(True)
 
 
