@@ -19,11 +19,12 @@ class TextIndicator(wx.Panel):
 
 
 class TextControlButton(wx.Panel):
-    def __init__(self, parent, name, redis_conn):
+    def __init__(self, parent, name, redis_conn, pubname="commanding"):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.textentry = wx.TextCtrl(self, -1)
         self.name = name
         self.redis_conn = redis_conn
+        self.pubname = pubname
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
         self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
@@ -36,7 +37,8 @@ class TextControlButton(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.issue, id=1)
 
     def issue(self, event):
-        self.redis_conn.set(self.name, self.textentry.GetValue())
+        command = "%s %s" % (self.name, self.textentry.GetValue())
+        self.redis_conn.publish(self.pubname, command)
 
 
 class ButtonBase(wx.Panel):

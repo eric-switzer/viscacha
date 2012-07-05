@@ -17,7 +17,7 @@ def postmsg(msg):
 class RedisSubscribe(threading.Thread):
     """Connect to redis and subscribe to a channel, wx-publishing msg"""
     def __init__(self, pool, client_id,
-                 subname="commanding"):
+                 subname="commanding_ack"):
         """
         `pool`: the redis connection pool for this instance
         `client_id`: identifier that allows the server to send information
@@ -41,7 +41,7 @@ class RedisSubscribe(threading.Thread):
             self.handle_msg(msg)
 
     def handle_msg(self, msg):
-        r"""Do simple parsin of the message from the server"""
+        r"""Do simple parsing of the message from the server"""
         if (msg['channel'] == self.client_id) or \
            (msg['channel'] == self.subname):
             # if the server tells the client to terminate its connection

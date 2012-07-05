@@ -37,7 +37,7 @@ class MainWindow(wx.Frame):
 
         # start a subscription for this client to receive messages from redis
         self.acksub = network_client.RedisSubscribe(self.pool, self.client_id,
-                                                subname="commanding")
+                                                    subname="commanding_ack")
 
         # start a thread which simply runs redis "monitor" and prints the text
         self.redmon = network_client.RedisMonitor(self.pool, self.client_id)
