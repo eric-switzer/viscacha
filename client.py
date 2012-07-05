@@ -67,11 +67,14 @@ class MainWindow(wx.Frame):
         sizer.Add(wx.Button(self.panel, 3, 'Send comment'),
                   (0, 2), (1, 1), wx.EXPAND)
 
-        sizer.Add(wx.TextCtrl(self), (1, 0), (1, 3), wx.EXPAND)
+        self.log_entry = wx.TextCtrl(self)
+        sizer.Add(self.log_entry, (1, 0), (1, 3), wx.EXPAND)
         self.SetSizerAndFit(sizer)
         self.Centre()
 
         self.Bind(wx.EVT_BUTTON, self.on_refresh, id=1)
+        self.Bind(wx.EVT_BUTTON, self.on_who, id=2)
+        self.Bind(wx.EVT_BUTTON, self.on_log, id=3)
 
     def build_menu(self):
         r"""Build the menu bar (file and command/monitor windows)"""
@@ -156,6 +159,15 @@ class MainWindow(wx.Frame):
                 print "%s unknown on server; setting to default" % varname
                 # TODO: fix this
                 #self.redis_conn.set(self.name, cmd_config['default'])
+
+    def on_who(self, event):
+        r"""List clients connected to the server"""
+        print self.redis_conn.lrange("gui_clients", 0, -1)
+
+    def on_log(self, event):
+        r"""Submit a log entry"""
+        message = self.log_entry.GetValue()
+        self.redis_conn.publish("log", message)
 
 
 if __name__ == "__main__":
