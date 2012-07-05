@@ -8,10 +8,16 @@ from wx.lib.pubsub import Publisher
 import pyredis_monitor
 
 
+def postmsg(msg):
+    """Send to GUI"""
+    (channel, command) = msg
+    Publisher().sendMessage(channel, command)
+
+
 class RedisSubscribe(threading.Thread):
     """Connect to redis and subscribe to a channel, wx-publishing msg"""
     def __init__(self, pool, client_id,
-                 subname="housekeeping_ack"):
+                 subname="commanding"):
         """
         `pool`: the redis connection pool for this instance
         `client_id`: identifier that allows the server to send information
@@ -44,21 +50,15 @@ class RedisSubscribe(threading.Thread):
             else:
                 try:
                     data = msg['data'].split()
-                    print data
                     if len(data) == 2:
                         channel = data[0]
                         value = data[1]
 
                     msg = (channel, value)
 
-                    wx.CallAfter(self.postmsg, msg)
+                    wx.CallAfter(postmsg, msg)
                 except:
                     pass
-
-    def postmsg(self, msg):
-        """Send time to GUI"""
-        (channel, command) = msg
-        Publisher().sendMessage(channel, command)
 
 
 class RedisMonitor(threading.Thread):
@@ -100,5 +100,18 @@ class RedisMonitor(threading.Thread):
             # ignore get requests (noise)
             if message_parse[0].lower() != "get":
                 print "%s > %s" % (timestamp, message)
+
+            # handle sets by pushing to the GUI
+            if message_parse[0].lower() == "set":
+                try:
+                    if len(message_parse) == 3:
+                        channel = message_parse[1]
+                        value = message_parse[2]
+
+                    msg = (channel, value)
+
+                    wx.CallAfter(postmsg, msg)
+                except:
+                    pass
 
             return True

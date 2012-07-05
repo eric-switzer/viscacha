@@ -1,33 +1,36 @@
 import wx
 from wx.lib.pubsub import Publisher
 
-
 class TextIndicator(wx.Panel):
-    def __init__(self, parent, id, name):
+    def __init__(self, parent, name):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
-        self.desctext = wx.StaticText(self, -1, name)
+        self.indicator = wx.StaticText(self, -1, "-" * 10,
+                                       style=wx.ALIGN_CENTER)
+        self.name = name
+        self.SetBackgroundColour("#fdf6e3")
+        self.Refresh()
 
         # create a pubsub receiver
         Publisher().subscribe(self.update, name)
 
     def update(self, msg):
         value = "cur: %s" % repr(msg.data)
-        self.desctext.SetLabel(value)
+        self.indicator.SetLabel(value)
 
 
 class TextControlButton(wx.Panel):
-    def __init__(self, parent, id, name, redis_conn):
+    def __init__(self, parent, name, redis_conn):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.textentry = wx.TextCtrl(self, -1)
         self.name = name
         self.redis_conn = redis_conn
 
-        box = wx.BoxSizer(wx.HORIZONTAL)
-        box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
-        box.Add(wx.Button(self, 1, 'Send'), proportion=0, flag=wx.ALIGN_LEFT)
+        self.box = wx.BoxSizer(wx.HORIZONTAL)
+        self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
+        self.box.Add(wx.Button(self, 1, 'Send'), proportion=0, flag=wx.ALIGN_LEFT)
         # TODO: add indicator
 
-        self.SetSizer(box)
+        self.SetSizer(self.box)
         self.Centre()
 
         self.Bind(wx.EVT_BUTTON, self.issue, id=1)
@@ -39,25 +42,26 @@ class TextControlButton(wx.Panel):
 class ButtonBase(wx.Panel):
     def __init__(self, parent, id, cmd_config, commanding, redis_conn):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
+        self.SetBackgroundColour("#eee8d5")
         self.config = cmd_config
         self.name = cmd_config['short_name']
-        desctext = wx.StaticText(self, -1, self.config['desc'])
-        indicator = TextIndicator(self, -1, self.name)
+        self.desctext = wx.StaticText(self, -1, self.config['desc'])
+        self.indicator = TextIndicator(self, self.name)
 
-        box = wx.BoxSizer(wx.HORIZONTAL)
+        self.box = wx.BoxSizer(wx.HORIZONTAL)
 
-        box.Add(desctext, proportion=1,
+        self.box.Add(self.desctext, proportion=1,
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
-        box.Add(indicator, proportion=0,
+        self.box.Add(self.indicator, proportion=0,
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
-            issuecmd = TextControlButton(self, -1, self.name, redis_conn)
-            box.Add(issuecmd,
+            issuecmd = TextControlButton(self, self.name, redis_conn)
+            self.box.Add(issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
 
-        self.SetSizer(box)
+        self.SetSizer(self.box)
         self.Centre()
 
 
@@ -65,23 +69,25 @@ class SubsystemTab(wx.Panel):
     def __init__(self, parent, config, system_name,
                  subsystem_name, commanding, redis_conn):
 
-        self.config = config
         wx.Panel.__init__(self, parent)
+        self.config = config
         self.variable_list = config.variable_list(system_name, subsystem_name)
-        num_variable = len(self.variable_list)
+        self.num_variable = len(self.variable_list)
 
-        box = wx.BoxSizer(wx.VERTICAL)
+        self.box = wx.BoxSizer(wx.VERTICAL)
+        self.buttons = {}
         for (variable_item, idx) in \
-            zip(self.variable_list, range(num_variable)):
+            zip(self.variable_list, range(self.num_variable)):
 
-            new_button = ButtonBase(self, -1,
+            self.buttons[variable_item] = ButtonBase(self, -1,
                                     self.config.variable_dict(variable_item),
                                     commanding,
                                     redis_conn)
 
-            box.Add(new_button, proportion=0, flag=wx.ALIGN_TOP | wx.EXPAND)
+            self.box.Add(self.buttons[variable_item], proportion=0,
+                         flag=wx.ALIGN_TOP | wx.EXPAND)
 
-        self.SetSizerAndFit(box)
+        self.SetSizerAndFit(self.box)
         self.Centre()
 
 
@@ -91,20 +97,32 @@ class SystemFrame(wx.Frame):
 
         subsystem_list = config.subsystem_list(system_name)
 
-        p = wx.Panel(self)
-        nb = wx.Notebook(p)
+        self.nbpanel = wx.Panel(self)
+        self.tabset = wx.Notebook(self.nbpanel)
+        self.tabset.SetBackgroundColour("#fdf6e3")
 
+        self.nb_pages = {}
+        tab_sizes = []
         for subsystem in subsystem_list:
-            nbpage = SubsystemTab(nb, config, system_name, subsystem,
-                                  commanding, redis_conn)
+            self.nb_pages[subsystem] = SubsystemTab(self.tabset, config,
+                                                    system_name,
+                                                    subsystem,
+                                                    commanding, redis_conn)
             #staticbox = wx.StaticBox(nbpage, -1, subsystem)
             #sizer = wx.StaticBoxSizer(staticbox, wx.EXPAND)
             #nbpage.SetSizer(sizer)
 
-            nb.AddPage(nbpage, subsystem)
+            self.nb_pages[subsystem].SetInitialSize()
+            tab_sizes.append(self.nb_pages[subsystem].GetSize())
+            self.tabset.AddPage(self.nb_pages[subsystem], subsystem)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(nb, 1, wx.EXPAND, 0)
-        p.SetSizer(sizer)
-        sizer.Fit(p)
+        self.sizer = wx.BoxSizer(wx.VERTICAL)
+        self.sizer.Add(self.tabset, 1, wx.EXPAND, 0)
+        self.nbpanel.SetSizer(self.sizer)
+
+        windowsize = max(tab_sizes) + (100,100)
+        self.SetClientSize(windowsize)
+        self.SendSizeEvent()
+
+        self.sizer.Fit(self.nbpanel)
         self.Layout()
