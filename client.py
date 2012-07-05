@@ -7,6 +7,7 @@ import network_client
 import control_parse
 import client_gui
 from wx.lib.pubsub import Publisher
+from optparse import OptionParser
 
 
 class MainWindow(wx.Frame):
@@ -14,14 +15,13 @@ class MainWindow(wx.Frame):
     and windows
     TODO: remove parent=None, id=-1 option?
     """
-    def __init__(self, parent=None, id=-1):
+    def __init__(self, configaddr, server, port, parent=None, id=-1):
         # get the JSON configuration file
-        configaddr = "http://www.cita.utoronto.ca/~eswitzer/master.json"
         self.config = control_parse.ControlSpec(configaddr=configaddr,
                                                 silent=False)
 
         # start the redis server connection
-        self.pool = redis.ConnectionPool(host="localhost", port=6379, db=0)
+        self.pool = redis.ConnectionPool(host=server, port=port, db=0)
         self.redis_conn = redis.Redis(connection_pool=self.pool)
 
         # client IDs are a random string for this instance
@@ -171,8 +171,37 @@ class MainWindow(wx.Frame):
 
 
 if __name__ == "__main__":
+    r"""main command-line interface"""
+    parser = OptionParser(usage="usage: %prog [options] json_url",
+                          version="%prog 1.0")
+
+    parser.add_option("-s", "--server",
+                      action="store",
+                      dest="server",
+                      default="localhost",
+                      help="Redis host")
+
+    parser.add_option("-p", "--port",
+                      action="store",
+                      dest="port",
+                      default="6379",
+                      help="Redis host port")
+
+    (options, args) = parser.parse_args()
+    optdict = vars(options)
+
+    if len(args) != 1:
+        #parser.error("no JSON url given; using dummy")
+        print "no JSON url given; using dummy"
+        jsonfile = "http://www.cita.utoronto.ca/~eswitzer/master.json"
+    else:
+        jsonfile = args[0]
+
+    print "connecting to %s:%s" % (optdict['server'], optdict['port'])
+    print "based on JSON URL: %s" % jsonfile
+
     client_app = wx.App()
-    main_win = MainWindow()
+    main_win = MainWindow(jsonfile, optdict['server'], int(optdict['port']))
     main_win.Show(True)
     client_app.SetTopWindow(main_win)
     #control_tabs.ControlTabs("Housekeeping").Show()

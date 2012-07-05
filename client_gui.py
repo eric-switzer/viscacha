@@ -1,6 +1,7 @@
 import wx
 from wx.lib.pubsub import Publisher
 
+
 class TextIndicator(wx.Panel):
     def __init__(self, parent, name):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
@@ -75,6 +76,19 @@ class SubsystemTab(wx.Panel):
         self.config = config
         self.variable_list = config.variable_list(system_name, subsystem_name)
         self.num_variable = len(self.variable_list)
+
+        # find the order of the controls
+        # TODO can the db be natively ordered (JSON -> dict?) 
+        display_order = []
+        for variable_item in self.variable_list:
+            display_order.append(\
+                self.config.configdb[variable_item]['displayorder'])
+
+        print display_order
+        print self.variable_list
+        self.variable_list = [var for (order, var) in \
+                              sorted(zip(display_order, self.variable_list))]
+        print self.variable_list
 
         self.box = wx.BoxSizer(wx.VERTICAL)
         self.buttons = {}
