@@ -3,23 +3,40 @@ from wx.lib.pubsub import Publisher
 
 
 class TextIndicator(wx.Panel):
+    """a panel that displays text on a subscribed wx channel with `name`
+    to write text here, publish to the variable name
+    """
     def __init__(self, parent, name):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
-        self.indicator = wx.StaticText(self, -1, "-" * 10,
-                                       style=wx.ALIGN_CENTER)
+        #self.indicator = wx.StaticText(self, -1, "-" * 10,
+        #                               style=wx.ALIGN_CENTER)
+        self.indicator = wx.TextCtrl(self,
+                                    style=wx.TE_READONLY)
+
         self.name = name
         self.SetBackgroundColour("#fdf6e3")
         self.Refresh()
+
+        # post a default message in case the wx pubsub is not working
+        self.update(None)
 
         # create a pubsub receiver
         Publisher().subscribe(self.update, name)
 
     def update(self, msg):
-        value = "cur: %s" % repr(msg.data)
-        self.indicator.SetLabel(value)
+        try:
+            dataval = msg.data
+            value = "cur: %s" % repr(dataval.strip())
+        except:
+            value = "inactive"
+
+        #self.indicator.SetLabel(value)
+        self.indicator.SetValue(value)
 
 
 class TextControlButton(wx.Panel):
+    """a panel to publish command messages to redis
+    """
     def __init__(self, parent, name, redis_conn, pubname="commanding"):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.textentry = wx.TextCtrl(self, -1)
@@ -43,6 +60,12 @@ class TextControlButton(wx.Panel):
 
 
 class ButtonBase(wx.Panel):
+    """base class for all buttons to control variables
+    current structure:
+        fixed text field describing the variable
+        an indicator of its current status
+        a panel to issue commands to that variable
+    """
     def __init__(self, parent, id, cmd_config, commanding, redis_conn):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.SetBackgroundColour("#eee8d5")
@@ -69,27 +92,29 @@ class ButtonBase(wx.Panel):
 
 
 class SubsystemTab(wx.Panel):
+    """set up a tabbed menu item for one subsystem
+    the subsystem is indexed by `system_name`->`subsystem_name`
+    """
     def __init__(self, parent, config, system_name,
                  subsystem_name, commanding, redis_conn):
 
         wx.Panel.__init__(self, parent)
         self.config = config
+
+        # find the controllable variables in this subsystem
         self.variable_list = config.variable_list(system_name, subsystem_name)
         self.num_variable = len(self.variable_list)
 
         # find the order of the controls
-        # TODO can the db be natively ordered (JSON -> dict?) 
         display_order = []
         for variable_item in self.variable_list:
             display_order.append(\
                 self.config.configdb[variable_item]['displayorder'])
 
-        print display_order
-        print self.variable_list
         self.variable_list = [var for (order, var) in \
                               sorted(zip(display_order, self.variable_list))]
-        print self.variable_list
 
+        # add all the buttons to control variables in this subsystem tab
         self.box = wx.BoxSizer(wx.VERTICAL)
         self.buttons = {}
         for (variable_item, idx) in \
@@ -108,6 +133,8 @@ class SubsystemTab(wx.Panel):
 
 
 class SystemFrame(wx.Frame):
+    """build the full window describing contol of one system
+    """
     def __init__(self, config, system_name, commanding, redis_conn):
         wx.Frame.__init__(self, wx.GetApp().TopWindow, title=system_name)
 
