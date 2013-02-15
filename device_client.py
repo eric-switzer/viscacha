@@ -35,7 +35,7 @@ class RedisSubscribeQueue(threading.Thread):
 
 
 class DeviceClient(object):
-    def __init__(self, subname="commanding", ackname="commanding_ack"):
+    def __init__(self, subname="test_code", ackname="commanding_ack"):
         configaddr = "example.json"
         self.command_queue = Queue()
         self.config = control_parse.ControlSpec(configaddr=configaddr,
@@ -51,7 +51,7 @@ class DeviceClient(object):
             item = self.command_queue.get()
             print "starting on: ", item
             # working really hard now:
-            time.sleep(5)
+            time.sleep(0.5)
             print "done"
             command = item['data'].split()
             if len(command) == 2:

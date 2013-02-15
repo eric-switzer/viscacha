@@ -39,6 +39,40 @@ class TextIndicator(wx.Panel):
         self.indicator.SetValue(value)
 
 
+class OnoffIndicator(wx.Panel):
+    """a panel that displays text on a subscribed wx channel with `name`
+    to write text here, publish to the variable name
+    """
+    def __init__(self, parent, name):
+        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER, size=(30, 30))
+
+        self.name = name
+        self.Refresh()
+
+        # post a default message in case the wx pubsub is not working
+        self.update(None)
+
+        # create a pubsub receiver
+        Publisher().subscribe(self.update, name)
+
+    def update(self, msg):
+        try:
+            dataval = msg.data
+            value = float(dataval.strip())
+
+            if value:
+                self.SetBackgroundColour("#00ff00")
+            else:
+                self.SetBackgroundColour("#000000")
+
+            # whenever the value is updated, see if it corresponds to the last
+            # commanded value
+            issue_message = ("ack", dataval)
+            Publisher().sendMessage(self.name + "/indicator", issue_message)
+        except:
+            self.SetBackgroundColour("#aaaaaa")
+
+
 class TextControlButton(wx.Panel):
     """a panel to publish command messages to redis
     """
@@ -51,7 +85,8 @@ class TextControlButton(wx.Panel):
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
         self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
-        self.box.Add(wx.Button(self, 1, 'Send'), proportion=0, flag=wx.ALIGN_LEFT)
+        self.box.Add(wx.Button(self, 1, "Send"), proportion=0, flag=wx.ALIGN_LEFT)
+        #self.box.Add(wx.Button(self, wx.ID_OK), proportion=0, flag=wx.ALIGN_LEFT)
         # TODO: add indicator
 
         self.SetSizer(self.box)
@@ -121,7 +156,23 @@ class ButtonBase(wx.Panel):
         self.config = cmd_config
         #self.name = cmd_config['short_name']
         self.desctext = wx.StaticText(self, -1, self.config['desc'])
-        self.indicator = TextIndicator(self, name)
+
+        # depending on the button type, pick the current value indicator and
+        # value entry method
+        if self.config['type'] == 'input_value':
+            self.indicator = TextIndicator(self, name)
+
+            if commanding:
+                self.issuecmd = TextControlButton(self, name, redis_conn,
+                                            pubname=self.config['destination'])
+
+        if self.config['type'] == 'input_onoff':
+            self.indicator = OnoffIndicator(self, name)
+
+            if commanding:
+                self.issuecmd = TextControlButton(self, name, redis_conn,
+                                            pubname=self.config['destination'])
+
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -132,7 +183,6 @@ class ButtonBase(wx.Panel):
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
-            self.issuecmd = TextControlButton(self, name, redis_conn)
             self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
 

@@ -1,46 +1,46 @@
 {
-    "dn_conf_mess": {
-        "system": "Pointing", 
-        "category": "Set bits", 
+    "toaster_conf": {
+        "system": "Toaster", 
+        "category": "Subsystem A", 
+        "destination": "test_code", 
         "confirm": 0, 
-        "default_val": 0.0, 
         "desc": "Go", 
         "displayorder": 1, 
         "type": "input_onoff", 
         "units": ""
     }, 
-    "dn_ack_mess": {
-        "system": "Pointing", 
-        "category": "Set bits", 
+    "toaster_ack": {
+        "system": "Toaster", 
+        "category": "Subsystem A", 
+        "destination": "test_code", 
         "confirm": 0, 
-        "default_val": 0.0, 
         "desc": "Ack", 
         "displayorder": 1, 
         "type": "input_onoff", 
         "units": ""
     }, 
-    "dn_stop_mess": {
-        "system": "Pointing", 
-        "category": "Set bits", 
+    "toaster_stop": {
+        "system": "Toaster", 
+        "category": "Subsystem B", 
+        "destination": "test_code", 
         "confirm": 0, 
-        "default_val": 0.0, 
         "desc": "Stop", 
         "displayorder": 1, 
         "type": "input_onoff", 
         "units": ""
     }, 
-    "dn_val": {
-        "system": "Pointing", 
-        "category": "Set bits", 
+    "toaster_val": {
+        "system": "Toaster", 
+        "category": "Subsystem B", 
+        "destination": "test_code", 
         "confirm": 0, 
-        "default_val": 0.0, 
         "desc": "Value", 
         "displayorder": 1, 
         "minmax": [
             0, 
-            1
+            10
         ], 
-        "type": "input_onoff", 
+        "type": "input_value", 
         "units": ""
     }
 }
