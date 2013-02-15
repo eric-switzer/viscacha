@@ -2,6 +2,7 @@ import wx
 from wx.lib.pubsub import Publisher
 import input_value as vb
 import input_onoff as ob
+import input_select as sb
 
 
 class CommandStatusIndicator(wx.Panel):
@@ -28,17 +29,16 @@ class CommandStatusIndicator(wx.Panel):
             dataval = msg.data
             if dataval[0] == "issued":
                 self.SetBackgroundColour("#ffff00")
-                print "issued:", self.name, dataval[1]
+                #print "issued:", self.name, dataval[1]
                 self.val_issued = dataval[1]
 
             if dataval[0] == "ack":
-                print self.val_issued, dataval[1]
                 # if the ack returns the command that was issued
                 if dataval[1] == self.val_issued:
-                    print "ack:", self.name, dataval[1]
+                    #print "ack:", self.name, dataval[1]
                     self.SetBackgroundColour("#00ff00")
                 else:
-                    print "ack failed:", self.name, dataval[1]
+                    #print "ack failed:", self.name, dataval[1]
                     self.SetBackgroundColour("ff00000")
 
         except AttributeError:
@@ -75,7 +75,8 @@ class SubsystemTab(wx.Panel):
             zip(self.variable_list, range(self.num_variable)):
 
             config_info = self.config.variable_dict(variable_item)
-            if config_info['type'] == "input_value":
+            if ((config_info['type'] == "input_value") or \
+                (config_info['type'] == "input_float")):
                 self.buttons[variable_item] = vb.ButtonBarValue(self, -1,
                                     variable_item,
                                     config_info,
@@ -84,6 +85,13 @@ class SubsystemTab(wx.Panel):
 
             if config_info['type'] == "input_onoff":
                 self.buttons[variable_item] = ob.ButtonBarOnoff(self, -1,
+                                    variable_item,
+                                    config_info,
+                                    commanding,
+                                    redis_conn)
+
+            if config_info['type'] == "input_select":
+                self.buttons[variable_item] = sb.ButtonBarSelect(self, -1,
                                     variable_item,
                                     config_info,
                                     commanding,

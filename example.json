@@ -6,8 +6,7 @@
         "confirm": 0, 
         "desc": "Go", 
         "displayorder": 1, 
-        "type": "input_onoff", 
-        "units": ""
+        "type": "input_onoff" 
     }, 
     "toaster_ack": {
         "system": "Toaster", 
@@ -16,8 +15,16 @@
         "confirm": 0, 
         "desc": "Ack", 
         "displayorder": 1, 
-        "type": "input_onoff", 
-        "units": ""
+        "type": "input_onoff" 
+    }, 
+    "toaster_eject": {
+        "system": "Toaster", 
+        "category": "Subsystem A", 
+        "destination": "test_code", 
+        "confirm": 0, 
+        "desc": "Eject", 
+        "displayorder": 1, 
+        "type": "input_select" 
     }, 
     "toaster_stop": {
         "system": "Toaster", 
@@ -26,8 +33,7 @@
         "confirm": 0, 
         "desc": "Stop", 
         "displayorder": 1, 
-        "type": "input_onoff", 
-        "units": ""
+        "type": "input_onoff" 
     }, 
     "toaster_val": {
         "system": "Toaster", 
