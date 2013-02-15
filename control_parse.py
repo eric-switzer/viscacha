@@ -47,6 +47,14 @@ def load_json_over_http(url):
     return retjson
 
 
+def load_json(filename):
+    r"""Load a JSON file"""
+    with open(filename, "r") as fp_json:
+        retjson = json.load(fp_json, object_hook=_decode_dict)
+
+    return retjson
+
+
 def load_json_over_http_file(url):
     r"""alternate implementation which writes a file"""
     req = urllib2.urlopen(url)
@@ -92,7 +100,12 @@ class ControlSpec(object):
         if configaddr is not None:
             treetitle = "System tree specified in: " + configaddr
             print treetitle + "\n" + "-" * len(treetitle)
-            self.configdb = load_json_over_http(configaddr)
+            if "http://" in configaddr:
+                print "opening from url: ", configaddr
+                self.configdb = load_json_over_http(configaddr)
+            else:
+                print "opening from file: ", configaddr
+                self.configdb = load_json(configaddr)
 
         if configdb is not None:
             self.configdb = configdb

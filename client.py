@@ -193,7 +193,7 @@ if __name__ == "__main__":
     if len(args) != 1:
         #parser.error("no JSON url given; using dummy")
         print "no JSON url given; using dummy"
-        jsonfile = "test.json"
+        jsonfile = "example.json"
     else:
         jsonfile = args[0]
 

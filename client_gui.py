@@ -115,13 +115,13 @@ class ButtonBase(wx.Panel):
         an indicator of its current status
         a panel to issue commands to that variable
     """
-    def __init__(self, parent, id, cmd_config, commanding, redis_conn):
-        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
+    def __init__(self, parent, identifier, name, cmd_config, commanding, redis_conn):
+        wx.Panel.__init__(self, parent, id=identifier, style=wx.RAISED_BORDER)
         self.SetBackgroundColour("#eee8d5")
         self.config = cmd_config
-        self.name = cmd_config['short_name']
+        #self.name = cmd_config['short_name']
         self.desctext = wx.StaticText(self, -1, self.config['desc'])
-        self.indicator = TextIndicator(self, self.name)
+        self.indicator = TextIndicator(self, name)
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -132,11 +132,11 @@ class ButtonBase(wx.Panel):
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
-            self.issuecmd = TextControlButton(self, self.name, redis_conn)
+            self.issuecmd = TextControlButton(self, name, redis_conn)
             self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
 
-            self.status = CommandStatusIndicator(self, self.name)
+            self.status = CommandStatusIndicator(self, name)
             self.box.Add(self.status, proportion=0,
                     flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
@@ -174,6 +174,7 @@ class SubsystemTab(wx.Panel):
             zip(self.variable_list, range(self.num_variable)):
 
             self.buttons[variable_item] = ButtonBase(self, -1,
+                                    variable_item,
                                     self.config.variable_dict(variable_item),
                                     commanding,
                                     redis_conn)

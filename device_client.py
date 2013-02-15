@@ -36,7 +36,7 @@ class RedisSubscribeQueue(threading.Thread):
 
 class DeviceClient(object):
     def __init__(self, subname="commanding", ackname="commanding_ack"):
-        configaddr = "test.json"
+        configaddr = "example.json"
         self.command_queue = Queue()
         self.config = control_parse.ControlSpec(configaddr=configaddr,
                                                 silent=False)
