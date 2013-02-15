@@ -1,105 +1,7 @@
 import wx
 from wx.lib.pubsub import Publisher
-
-
-class TextIndicator(wx.Panel):
-    """a panel that displays text on a subscribed wx channel with `name`
-    to write text here, publish to the variable name
-    """
-    def __init__(self, parent, name):
-        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
-        #self.indicator = wx.StaticText(self, -1, "-" * 10,
-        #                               style=wx.ALIGN_CENTER)
-        self.indicator = wx.TextCtrl(self,
-                                    style=wx.TE_READONLY)
-
-        self.name = name
-        self.SetBackgroundColour("#fdf6e3")
-        self.Refresh()
-
-        # post a default message in case the wx pubsub is not working
-        self.update(None)
-
-        # create a pubsub receiver
-        Publisher().subscribe(self.update, name)
-
-    def update(self, msg):
-        try:
-            dataval = msg.data
-            value = "cur: %s" % repr(dataval.strip())
-
-            # whenever the value is updated, see if it corresponds to the last
-            # commanded value
-            issue_message = ("ack", dataval)
-            Publisher().sendMessage(self.name + "/indicator", issue_message)
-        except:
-            value = "inactive"
-
-        #self.indicator.SetLabel(value)
-        self.indicator.SetValue(value)
-
-
-class OnoffIndicator(wx.Panel):
-    """a panel that displays text on a subscribed wx channel with `name`
-    to write text here, publish to the variable name
-    """
-    def __init__(self, parent, name):
-        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER, size=(30, 30))
-
-        self.name = name
-        self.Refresh()
-
-        # post a default message in case the wx pubsub is not working
-        self.update(None)
-
-        # create a pubsub receiver
-        Publisher().subscribe(self.update, name)
-
-    def update(self, msg):
-        try:
-            dataval = msg.data
-            value = float(dataval.strip())
-
-            if value:
-                self.SetBackgroundColour("#00ff00")
-            else:
-                self.SetBackgroundColour("#000000")
-
-            # whenever the value is updated, see if it corresponds to the last
-            # commanded value
-            issue_message = ("ack", dataval)
-            Publisher().sendMessage(self.name + "/indicator", issue_message)
-        except:
-            self.SetBackgroundColour("#aaaaaa")
-
-
-class TextControlButton(wx.Panel):
-    """a panel to publish command messages to redis
-    """
-    def __init__(self, parent, name, redis_conn, pubname="commanding"):
-        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
-        self.textentry = wx.TextCtrl(self, -1)
-        self.name = name
-        self.redis_conn = redis_conn
-        self.pubname = pubname
-
-        self.box = wx.BoxSizer(wx.HORIZONTAL)
-        self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
-        self.box.Add(wx.Button(self, 1, "Send"), proportion=0, flag=wx.ALIGN_LEFT)
-        #self.box.Add(wx.Button(self, wx.ID_OK), proportion=0, flag=wx.ALIGN_LEFT)
-        # TODO: add indicator
-
-        self.SetSizer(self.box)
-        self.Centre()
-
-        self.Bind(wx.EVT_BUTTON, self.issue, id=1)
-
-    def issue(self, event):
-        command = "%s %s" % (self.name, self.textentry.GetValue())
-        self.redis_conn.publish(self.pubname, command)
-        split_command = command.split(" ")
-        issue_message = ("issued", " ".join(split_command[1:]))
-        Publisher().sendMessage(self.name + "/indicator", issue_message)
+import input_value as vb
+import input_onoff as ob
 
 
 class CommandStatusIndicator(wx.Panel):
@@ -143,57 +45,6 @@ class CommandStatusIndicator(wx.Panel):
             self.SetBackgroundColour("#aaaaaa")
 
 
-class ButtonBase(wx.Panel):
-    """base class for all buttons to control variables
-    current structure:
-        fixed text field describing the variable
-        an indicator of its current status
-        a panel to issue commands to that variable
-    """
-    def __init__(self, parent, identifier, name, cmd_config, commanding, redis_conn):
-        wx.Panel.__init__(self, parent, id=identifier, style=wx.RAISED_BORDER)
-        self.SetBackgroundColour("#eee8d5")
-        self.config = cmd_config
-        #self.name = cmd_config['short_name']
-        self.desctext = wx.StaticText(self, -1, self.config['desc'])
-
-        # depending on the button type, pick the current value indicator and
-        # value entry method
-        if self.config['type'] == 'input_value':
-            self.indicator = TextIndicator(self, name)
-
-            if commanding:
-                self.issuecmd = TextControlButton(self, name, redis_conn,
-                                            pubname=self.config['destination'])
-
-        if self.config['type'] == 'input_onoff':
-            self.indicator = OnoffIndicator(self, name)
-
-            if commanding:
-                self.issuecmd = TextControlButton(self, name, redis_conn,
-                                            pubname=self.config['destination'])
-
-
-        self.box = wx.BoxSizer(wx.HORIZONTAL)
-
-        self.box.Add(self.desctext, proportion=1,
-                flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-
-        self.box.Add(self.indicator, proportion=0,
-                flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-
-        if commanding:
-            self.box.Add(self.issuecmd,
-                    proportion=0, flag=wx.ALIGN_RIGHT)
-
-            self.status = CommandStatusIndicator(self, name)
-            self.box.Add(self.status, proportion=0,
-                    flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-
-        self.SetSizer(self.box)
-        self.Centre()
-
-
 class SubsystemTab(wx.Panel):
     """set up a tabbed menu item for one subsystem
     the subsystem is indexed by `system_name`->`subsystem_name`
@@ -223,11 +74,22 @@ class SubsystemTab(wx.Panel):
         for (variable_item, idx) in \
             zip(self.variable_list, range(self.num_variable)):
 
-            self.buttons[variable_item] = ButtonBase(self, -1,
+            config_info = self.config.variable_dict(variable_item)
+            if config_info['type'] == "input_value":
+                self.buttons[variable_item] = vb.ButtonBarValue(self, -1,
                                     variable_item,
-                                    self.config.variable_dict(variable_item),
+                                    config_info,
                                     commanding,
                                     redis_conn)
+
+            if config_info['type'] == "input_onoff":
+                self.buttons[variable_item] = ob.ButtonBarOnoff(self, -1,
+                                    variable_item,
+                                    config_info,
+                                    commanding,
+                                    redis_conn)
+
+            # TODO: print error if type not recognized
 
             self.box.Add(self.buttons[variable_item], proportion=0,
                          flag=wx.ALIGN_TOP | wx.EXPAND)
