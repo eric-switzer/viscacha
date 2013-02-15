@@ -193,7 +193,7 @@ if __name__ == "__main__":
     if len(args) != 1:
         #parser.error("no JSON url given; using dummy")
         print "no JSON url given; using dummy"
-        jsonfile = "http://www.cita.utoronto.ca/~eswitzer/master.json"
+        jsonfile = "test.json"
     else:
         jsonfile = args[0]
 
