@@ -157,7 +157,7 @@ class MainWindow(wx.Frame):
                 Publisher().sendMessage(varname, val)
             else:
                 print "%s unknown on server; setting to default" % varname
-                # TODO: fix this
+                # TODO: fix this; also wxpublish the value
                 #self.redis_conn.set(self.name, cmd_config['default'])
 
     def on_who(self, event):

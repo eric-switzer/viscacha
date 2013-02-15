@@ -27,6 +27,11 @@ class TextIndicator(wx.Panel):
         try:
             dataval = msg.data
             value = "cur: %s" % repr(dataval.strip())
+
+            # whenever the value is updated, see if it corresponds to the last
+            # commanded value
+            issue_message = ("ack", dataval)
+            Publisher().sendMessage(self.name + "/indicator", issue_message)
         except:
             value = "inactive"
 
@@ -57,6 +62,50 @@ class TextControlButton(wx.Panel):
     def issue(self, event):
         command = "%s %s" % (self.name, self.textentry.GetValue())
         self.redis_conn.publish(self.pubname, command)
+        split_command = command.split(" ")
+        issue_message = ("issued", " ".join(split_command[1:]))
+        Publisher().sendMessage(self.name + "/indicator", issue_message)
+
+
+class CommandStatusIndicator(wx.Panel):
+    """a box that indicates the success of a submitted command
+    green: all commands received and acted on
+    yellow: command send, waiting for ack
+    red: ack received, but different value
+    """
+
+    def __init__(self, parent, name):
+        wx.Panel.__init__(self, parent, size=(10, 10))
+        self.Refresh()
+        self.val_issued = None
+        self.name = name
+
+        # post a default message in case the wx pubsub is not working
+        self.update(None)
+
+        # create a pubsub receiver
+        Publisher().subscribe(self.update, name + "/indicator")
+
+    def update(self, msg):
+        try:
+            dataval = msg.data
+            if dataval[0] == "issued":
+                self.SetBackgroundColour("#ffff00")
+                print "issued:", self.name, dataval[1]
+                self.val_issued = dataval[1]
+
+            if dataval[0] == "ack":
+                print self.val_issued, dataval[1]
+                # if the ack returns the command that was issued
+                if dataval[1] == self.val_issued:
+                    print "ack:", self.name, dataval[1]
+                    self.SetBackgroundColour("#00ff00")
+                else:
+                    print "ack failed:", self.name, dataval[1]
+                    self.SetBackgroundColour("ff00000")
+
+        except AttributeError:
+            self.SetBackgroundColour("#aaaaaa")
 
 
 class ButtonBase(wx.Panel):
@@ -83,9 +132,13 @@ class ButtonBase(wx.Panel):
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
-            issuecmd = TextControlButton(self, self.name, redis_conn)
-            self.box.Add(issuecmd,
+            self.issuecmd = TextControlButton(self, self.name, redis_conn)
+            self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
+
+            self.status = CommandStatusIndicator(self, self.name)
+            self.box.Add(self.status, proportion=0,
+                    flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         self.SetSizer(self.box)
         self.Centre()
