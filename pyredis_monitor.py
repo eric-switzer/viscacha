@@ -48,7 +48,8 @@ class Monitor(object):
         # This part with the OK is only needed when we connect initially.
         if response == 'OK':
             return response
-        time, command = response.split(' ',1)
+
+        time, command = response.split(' ', 1)
         return float(time), command
 
     def listen(self):
@@ -82,4 +83,6 @@ class MonitorTestCase(unittest.TestCase):
         self.monitor.monitor()
         self.assertEquals(self.monitor.listen().next()['command'], '"MONITOR"')
         self.client.set('foo', 'bare')
-        self.assertEquals(self.monitor.listen().next()['command'], '"SET" "foo" "bar"')
+
+        self.assertEquals(self.monitor.listen().next()['command'],
+                          '"SET" "foo" "bar"')

@@ -1,8 +1,6 @@
 import wx
 from wx.lib.pubsub import Publisher
 import client_gui as cg
-# TODO remove once this is a toggle switch
-import input_value as vb
 
 
 class OnoffIndicator(wx.Panel):
@@ -39,10 +37,46 @@ class OnoffIndicator(wx.Panel):
             self.SetBackgroundColour("#aaaaaa")
 
 
+class OnoffControlButton(wx.Panel):
+    """a panel to publish command messages to redis
+    """
+    def __init__(self, parent, name, redis_conn, pubname="commanding"):
+        wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
+        self.name = name
+        self.redis_conn = redis_conn
+        self.pubname = pubname
+
+        self.box = wx.BoxSizer(wx.HORIZONTAL)
+        self.cb = wx.CheckBox(self, -1, 'Toggle', (10, 10))
+        self.box.Add(self.cb, proportion=1, flag=wx.ALIGN_LEFT)
+        #self.box.Add(wx.Button(self, 1, "Toggle"),
+        #             proportion=0, flag=wx.ALIGN_LEFT)
+
+        wx.EVT_CHECKBOX(self, self.cb.GetId(), self.issue)
+
+        self.SetSizer(self.box)
+        self.Centre()
+
+        self.Bind(wx.EVT_BUTTON, self.issue, id=1)
+
+    def issue(self, event):
+        if self.cb.GetValue():
+            command = "%s 1" % (self.name)
+        else:
+            command = "%s 0" % (self.name)
+
+        self.redis_conn.publish(self.pubname, command)
+        split_command = command.split(" ")
+        issue_message = ("issued", " ".join(split_command[1:]))
+        Publisher().sendMessage(self.name + "/indicator", issue_message)
+
+
 class ButtonBarOnoff(wx.Panel):
     """bar of buttons to control an on-off toggle quantity
     """
-    def __init__(self, parent, identifier, name, cmd_config, commanding, redis_conn):
+    def __init__(self, parent, identifier, name,
+                 cmd_config, commanding, redis_conn):
+
         wx.Panel.__init__(self, parent, id=identifier, style=wx.RAISED_BORDER)
         self.SetBackgroundColour("#eee8d5")
         self.config = cmd_config
@@ -60,7 +94,7 @@ class ButtonBarOnoff(wx.Panel):
 
         # TODO swap this out with a toggle
         if commanding:
-            self.issuecmd = vb.TextControlButton(self, name, redis_conn,
+            self.issuecmd = OnoffControlButton(self, name, redis_conn,
                                             pubname=self.config['destination'])
 
             self.box.Add(self.issuecmd,
@@ -72,6 +106,3 @@ class ButtonBarOnoff(wx.Panel):
 
         self.SetSizer(self.box)
         self.Centre()
-
-
-

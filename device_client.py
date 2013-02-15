@@ -6,6 +6,7 @@ from Queue import Queue
 import time
 # TODO: have ctrl-C kill this more gracefully
 
+
 class RedisSubscribeQueue(threading.Thread):
     """Connect to redis and subscribe to a channel, wx-publishing msg"""
     def __init__(self, pool, command_queue, subname="commanding"):

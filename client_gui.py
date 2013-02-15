@@ -129,7 +129,7 @@ class SystemFrame(wx.Frame):
         self.sizer.Add(self.tabset, 1, wx.EXPAND, 0)
         self.nbpanel.SetSizer(self.sizer)
 
-        windowsize = max(tab_sizes) + (100,100)
+        windowsize = max(tab_sizes) + (100, 100)
         self.SetClientSize(windowsize)
         self.SendSizeEvent()
 

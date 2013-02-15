@@ -3,7 +3,7 @@ from wx.lib.pubsub import Publisher
 import client_gui as cg
 
 
-class TextIndicator(wx.Panel):
+class ValueIndicator(wx.Panel):
     """a panel that displays text on a subscribed wx channel with `name`
     to write text here, publish to the variable name
     """
@@ -40,7 +40,7 @@ class TextIndicator(wx.Panel):
         self.indicator.SetValue(value)
 
 
-class TextControlButton(wx.Panel):
+class ValueControlButton(wx.Panel):
     """a panel to publish command messages to redis
     """
     def __init__(self, parent, name, redis_conn, pubname="commanding"):
@@ -52,9 +52,8 @@ class TextControlButton(wx.Panel):
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
         self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
-        self.box.Add(wx.Button(self, 1, "Send"), proportion=0, flag=wx.ALIGN_LEFT)
-        #self.box.Add(wx.Button(self, wx.ID_OK), proportion=0, flag=wx.ALIGN_LEFT)
-        # TODO: add indicator
+        self.box.Add(wx.Button(self, 1, "Send"),
+                     proportion=0, flag=wx.ALIGN_LEFT)
 
         self.SetSizer(self.box)
         self.Centre()
@@ -76,13 +75,14 @@ class ButtonBarValue(wx.Panel):
         an indicator of its current status
         a panel to issue commands to that variable
     """
-    def __init__(self, parent, identifier, name, cmd_config, commanding, redis_conn):
+    def __init__(self, parent, identifier, name,
+                cmd_config, commanding, redis_conn):
         wx.Panel.__init__(self, parent, id=identifier, style=wx.RAISED_BORDER)
         self.SetBackgroundColour("#eee8d5")
         self.config = cmd_config
         self.desctext = wx.StaticText(self, -1, self.config['desc'])
 
-        self.indicator = TextIndicator(self, name)
+        self.indicator = ValueIndicator(self, name)
         self.box = wx.BoxSizer(wx.HORIZONTAL)
 
         self.box.Add(self.desctext, proportion=1,
@@ -92,7 +92,7 @@ class ButtonBarValue(wx.Panel):
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
-            self.issuecmd = TextControlButton(self, name, redis_conn,
+            self.issuecmd = ValueControlButton(self, name, redis_conn,
                                             pubname=self.config['destination'])
             self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
@@ -103,6 +103,3 @@ class ButtonBarValue(wx.Panel):
 
         self.SetSizer(self.box)
         self.Centre()
-
-
-
