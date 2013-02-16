@@ -3,7 +3,7 @@
         "system": "Toaster", 
         "category": "Subsystem A", 
         "destination": "test_code", 
-        "confirm": 0, 
+        "confirm": 1, 
         "desc": "Go", 
         "displayorder": 1, 
         "type": "input_onoff" 
@@ -12,7 +12,7 @@
         "system": "Toaster", 
         "category": "Subsystem A", 
         "destination": "test_code", 
-        "confirm": 0, 
+        "confirm": 1, 
         "desc": "Ack", 
         "displayorder": 1, 
         "type": "input_onoff" 
@@ -21,7 +21,7 @@
         "system": "Toaster", 
         "category": "Subsystem A", 
         "destination": "test_code", 
-        "confirm": 0, 
+        "confirm": 1, 
         "desc": "Eject", 
         "displayorder": 1, 
         "type": "input_select" 
@@ -41,6 +41,16 @@
         "destination": "test_code", 
         "confirm": 0, 
         "desc": "Value", 
+        "displayorder": 1, 
+        "type": "input_value", 
+        "units": ""
+    }, 
+    "toaster_val_safe": {
+        "system": "Toaster", 
+        "category": "Subsystem B", 
+        "destination": "test_code", 
+        "confirm": 1, 
+        "desc": "Safe value", 
         "displayorder": 1, 
         "minmax": [
             0, 

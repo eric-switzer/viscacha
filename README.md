@@ -39,3 +39,15 @@ The interface:
 When `client.py` starts, it opens a window titled `Command Window`. This has buttons `Refresh` (get most recent values from redis for each variable), `Who` (see what clients are registered) and `Send comment` (publish a comment that all clients can see and log). Under `Monitor` in the menu bar, you can select systems and pull up a window that only shows current values. The same system can be pulled up under `Command` in the menu bar to extend each variable to allow control.
 
 When a control system window comes up, it will have sub-system tabs, and within those, a list of variables. Each variable has a description, a current value indicator, and a method of sending a new value. When the value gets sent, the indicator box becomes yellow until it hears an ack from the device client that the command has been received and acted on. If the ack returns the requested value (success), the box turns green and if not, it turns red.
+
+Configuration:
+--------------
+
+The configuration is managed in a json file.
+
+* system: one window has all the control for one system
+* category: is a tab of sub-systems under the main system window
+* destination: name to publish `redis` command to
+* displayorder: order of how the variable/action buttons appear (linear)
+* type: The `type` field indicates the kind of entry for the variable/action. Allowed values are `input_onoff`, `input_value`, and `input_select`. The on/off type gives a toggle switch that switches between 0 and 1. The value type allows the user to set a variable to a numerical value. The "select" type does not send a value be instead triggers some action on the device.
+* confirm: an optional keyword that requires user confirmation before sending a command

@@ -24,11 +24,14 @@ class SelectIndicator():
 class SelectControlButton(wx.Panel):
     """a panel to publish command messages to redis
     """
-    def __init__(self, parent, name, redis_conn, pubname="commanding"):
+    def __init__(self, parent, name, redis_conn,
+                 pubname="commanding", confirm=False):
+
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.name = name
         self.redis_conn = redis_conn
         self.pubname = pubname
+        self.confirm = confirm
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
         self.box.Add(wx.Button(self, 1, "Run"),
@@ -40,12 +43,23 @@ class SelectControlButton(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.issue, id=1)
 
     def issue(self, event):
-        command = "%s 1" % (self.name)
+        if self.confirm:
+            dlg = wx.MessageDialog(self,
+                "Do you really want to perform this action?",
+                "Confirm", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
 
-        self.redis_conn.publish(self.pubname, command)
-        split_command = command.split(" ")
-        issue_message = ("issued", " ".join(split_command[1:]))
-        Publisher().sendMessage(self.name + "/indicator", issue_message)
+            result = dlg.ShowModal()
+        else:
+            result = wx.ID_OK
+
+        if result == wx.ID_OK:
+            command = "%s 1" % (self.name)
+            self.redis_conn.publish(self.pubname, command)
+            split_command = command.split(" ")
+            issue_message = ("issued", " ".join(split_command[1:]))
+            Publisher().sendMessage(self.name + "/indicator", issue_message)
+        else:
+            print "operation cancelled"
 
 
 class ButtonBarSelect(wx.Panel):
@@ -69,7 +83,8 @@ class ButtonBarSelect(wx.Panel):
         # TODO swap this out with a toggle
         if commanding:
             self.issuecmd = SelectControlButton(self, name, redis_conn,
-                                            pubname=self.config['destination'])
+                                            pubname=self.config['destination'],
+                                            confirm=self.config['confirm'])
 
             self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
