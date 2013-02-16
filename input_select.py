@@ -46,7 +46,7 @@ class SelectControlButton(wx.Panel):
         if self.confirm:
             dlg = wx.MessageDialog(self,
                 "Do you really want to perform this action?",
-                "Confirm", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+                "Confirm", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
 
             result = dlg.ShowModal()
         else:

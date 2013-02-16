@@ -43,7 +43,7 @@
         "desc": "Value", 
         "displayorder": 1, 
         "type": "input_value", 
-        "units": ""
+        "units": "V"
     }, 
     "toaster_val_safe": {
         "system": "Toaster", 
@@ -57,6 +57,6 @@
             10
         ], 
         "type": "input_value", 
-        "units": ""
+        "units": "A"
     }
 }

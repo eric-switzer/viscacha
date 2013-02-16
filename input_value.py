@@ -7,7 +7,7 @@ class ValueIndicator(wx.Panel):
     """a panel that displays text on a subscribed wx channel with `name`
     to write text here, publish to the variable name
     """
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, units=""):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         #self.indicator = wx.StaticText(self, -1, "-" * 10,
         #                               style=wx.ALIGN_CENTER)
@@ -15,6 +15,7 @@ class ValueIndicator(wx.Panel):
                                     style=wx.TE_READONLY)
 
         self.name = name
+        self.units = units
         self.SetBackgroundColour("#fdf6e3")
         self.Refresh()
 
@@ -27,7 +28,7 @@ class ValueIndicator(wx.Panel):
     def update(self, msg):
         try:
             dataval = msg.data
-            value = "cur: %s" % repr(dataval.strip())
+            value = "cur: %s %s" % (repr(dataval.strip()), self.units)
 
             # whenever the value is updated, see if it corresponds to the last
             # commanded value
@@ -67,7 +68,7 @@ class ValueControlButton(wx.Panel):
         if self.confirm:
             dlg = wx.MessageDialog(self,
                 "Do you really want to perform this action?",
-                "Confirm", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+                "Confirm", wx.OK | wx.CANCEL | wx.ICON_QUESTION)
 
             result = dlg.ShowModal()
         else:
@@ -97,7 +98,9 @@ class ButtonBarValue(wx.Panel):
         self.config = cmd_config
         self.desctext = wx.StaticText(self, -1, self.config['desc'])
 
-        self.indicator = ValueIndicator(self, name)
+        self.indicator = ValueIndicator(self, name,
+                                        units=self.config['units'])
+
         self.box = wx.BoxSizer(wx.HORIZONTAL)
 
         self.box.Add(self.desctext, proportion=1,
