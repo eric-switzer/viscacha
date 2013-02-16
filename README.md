@@ -45,9 +45,10 @@ Configuration:
 
 The configuration is managed in a json file.
 
-* system: one window has all the control for one system
-* category: is a tab of sub-systems under the main system window
-* destination: name to publish `redis` command to
-* displayorder: order of how the variable/action buttons appear (linear)
-* type: The `type` field indicates the kind of entry for the variable/action. Allowed values are `input_onoff`, `input_value`, and `input_select`. The on/off type gives a toggle switch that switches between 0 and 1. The value type allows the user to set a variable to a numerical value. The "select" type does not send a value be instead triggers some action on the device.
-* confirm: an optional keyword that requires user confirmation before sending a command
+* `system`: one window has all the control for one system
+* `category`: is a tab of sub-systems under the main system window
+* `destination`: name to publish `redis` command to
+* `displayorder`: order of how the variable/action buttons appear (linear)
+* `type`: The `type` field indicates the kind of entry for the variable/action. Allowed values are `input_onoff`, `input_value`, and `input_select`. The on/off type gives a toggle switch that switches between 0 and 1. The value type allows the user to set a variable to a numerical value. The "select" type does not send a value be instead triggers some action on the device.
+* `confirm`: an optional keyword that requires user confirmation before sending a command
+* `minmax`: an optional keyword for `input_value` that specifies the allowed range of the value (interpreted as a float)

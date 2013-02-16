@@ -45,7 +45,7 @@ class ValueControlButton(wx.Panel):
     """a panel to publish command messages to redis
     """
     def __init__(self, parent, name, redis_conn,
-                 pubname="commanding", confirm=False):
+                 pubname="commanding", confirm=False, var_range=None):
 
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
         self.textentry = wx.TextCtrl(self, -1)
@@ -53,6 +53,7 @@ class ValueControlButton(wx.Panel):
         self.redis_conn = redis_conn
         self.pubname = pubname
         self.confirm = confirm
+        self.var_range = var_range
 
         self.box = wx.BoxSizer(wx.HORIZONTAL)
         self.box.Add(self.textentry, proportion=1, flag=wx.ALIGN_LEFT)
@@ -64,7 +65,9 @@ class ValueControlButton(wx.Panel):
 
         self.Bind(wx.EVT_BUTTON, self.issue, id=1)
 
+    # TODO: may choose to force types with e.g. getattr(__builtin__,'int')
     def issue(self, event):
+        # if confirmation is required
         if self.confirm:
             dlg = wx.MessageDialog(self,
                 "Do you really want to perform this action?",
@@ -74,8 +77,25 @@ class ValueControlButton(wx.Panel):
         else:
             result = wx.ID_OK
 
-        if result == wx.ID_OK:
-            command = "%s %s" % (self.name, self.textentry.GetValue())
+        # if the range needs to be checked
+        if self.var_range is not None:
+            val_safe = False
+            try:
+                value = float(self.textentry.GetValue())
+                if ((value < self.var_range[1]) and \
+                    (value > self.var_range[0])):
+                    val_safe = True
+                else:
+                    print value, "out of range", self.var_range
+            except ValueError:
+                value = self.textentry.GetValue()
+                print "unable to interpret as float:", value
+        else:
+            value = self.textentry.GetValue()
+            val_safe = True
+
+        if result == wx.ID_OK and val_safe:
+            command = "%s %s" % (self.name, value)
             self.redis_conn.publish(self.pubname, command)
             split_command = command.split(" ")
             issue_message = ("issued", " ".join(split_command[1:]))
@@ -110,9 +130,15 @@ class ButtonBarValue(wx.Panel):
                 flag=wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
 
         if commanding:
+            try:
+                var_range = self.config['minmax']
+            except:
+                var_range = None
+
             self.issuecmd = ValueControlButton(self, name, redis_conn,
                                             pubname=self.config['destination'],
-                                            confirm=self.config['confirm'])
+                                            confirm=self.config['confirm'],
+                                            var_range=var_range)
 
             self.box.Add(self.issuecmd,
                     proportion=0, flag=wx.ALIGN_RIGHT)
