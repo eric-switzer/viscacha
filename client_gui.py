@@ -33,13 +33,16 @@ class CommandStatusIndicator(wx.Panel):
                 self.val_issued = dataval[1]
 
             if dataval[0] == "ack":
-                # if the ack returns the command that was issued
-                if dataval[1] == self.val_issued:
-                    #print "ack:", self.name, dataval[1]
-                    self.SetBackgroundColour("#00ff00")
+                if dataval[1]:
+                    # if the ack returns the command that was issued
+                    if dataval[1] == self.val_issued:
+                        #print "ack:", self.name, dataval[1]
+                        self.SetBackgroundColour("#00ff00")
+                    else:
+                        #print "ack failed:", self.name, dataval[1]
+                        self.SetBackgroundColour("ff00000")
                 else:
-                    #print "ack failed:", self.name, dataval[1]
-                    self.SetBackgroundColour("ff00000")
+                    self.SetBackgroundColour("#00ff00")
 
         except AttributeError:
             self.SetBackgroundColour("#aaaaaa")
@@ -142,4 +145,5 @@ class SystemFrame(wx.Frame):
         self.SendSizeEvent()
 
         self.sizer.Fit(self.nbpanel)
+
         self.Layout()

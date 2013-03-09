@@ -55,9 +55,15 @@ class DeviceClient(object):
             time.sleep(0.5)
             print "done"
             command = item['data'].split()
+
+            # optional call to simulate a device that does not reply with a
+            # value
+            #reply = [command[0]]
+            reply = command
+
             if len(command) == 2:
                 self.redis_conn.set(command[0], command[1])
-                self.redis_conn.publish(ackname, " ".join(command))
+                self.redis_conn.publish(ackname, " ".join(reply))
             else:
                 print "malformed command: ", " ".join(command)
 

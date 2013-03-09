@@ -9,10 +9,15 @@ class ValueIndicator(wx.Panel):
     """
     def __init__(self, parent, name, units=""):
         wx.Panel.__init__(self, parent, style=wx.RAISED_BORDER)
-        #self.indicator = wx.StaticText(self, -1, "-" * 10,
-        #                               style=wx.ALIGN_CENTER)
-        self.indicator = wx.TextCtrl(self,
-                                    style=wx.TE_READONLY)
+        self.indicator = wx.StaticText(self, -1, "-" * 10,
+                                       style=wx.ALIGN_CENTER)
+        #self.indicator = wx.TextCtrl(self,
+        #                            style=wx.TE_READONLY)
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.indicator, 1)
+        self.SetSizer(self.sizer)
+        self.Layout()
 
         self.name = name
         self.units = units
@@ -28,7 +33,7 @@ class ValueIndicator(wx.Panel):
     def update(self, msg):
         try:
             dataval = msg.data
-            value = "cur: %s %s" % (repr(dataval.strip()), self.units)
+            value = "cur: %s %s" % (dataval.strip(), self.units)
 
             # whenever the value is updated, see if it corresponds to the last
             # commanded value
@@ -37,8 +42,8 @@ class ValueIndicator(wx.Panel):
         except:
             value = "inactive"
 
-        #self.indicator.SetLabel(value)
-        self.indicator.SetValue(value)
+        self.indicator.SetLabel(value)
+        #self.indicator.SetValue(value)
 
 
 class ValueControlButton(wx.Panel):
@@ -82,8 +87,8 @@ class ValueControlButton(wx.Panel):
             val_safe = False
             try:
                 value = float(self.textentry.GetValue())
-                if ((value < self.var_range[1]) and \
-                    (value > self.var_range[0])):
+                if ((value <= self.var_range[1]) and \
+                    (value >= self.var_range[0])):
                     val_safe = True
                 else:
                     print value, "out of range", self.var_range
