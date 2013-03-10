@@ -16,13 +16,14 @@ class MainWindow(wx.Frame):
     TODO: remove parent=None, id=-1 option?
     """
     def __init__(self, configaddr, server, port, parent=None, id=-1):
-        # get the JSON configuration file
-        self.config = control_parse.ControlSpec(configaddr=configaddr,
-                                                silent=False)
-
         # start the redis server connection
         self.pool = redis.ConnectionPool(host=server, port=port, db=0)
         self.redis_conn = redis.Redis(connection_pool=self.pool)
+
+        # get the JSON configuration file
+        self.config = control_parse.ControlSpec(configaddr=configaddr,
+                                                silent=False,
+                                                redis_conn=self.redis_conn)
 
         # client IDs are a random string for this instance
         self.client_id = "client_" + ''.join('%02x' % ord(x) for
@@ -193,7 +194,7 @@ if __name__ == "__main__":
     if len(args) != 1:
         #parser.error("no JSON url given; using dummy")
         print "no JSON url given; using dummy"
-        jsonfile = "example.json"
+        jsonfile = "redis://command_specification"
     else:
         jsonfile = args[0]
 

@@ -47,6 +47,17 @@ def load_json_over_http(url):
     return retjson
 
 
+def load_json_from_redis(key, redis_conn):
+    r"""Load a JSON file from a redis key"""
+    try:
+        control_db = redis_conn.get(key)
+        retjson = json.loads(control_db, object_hook=_decode_dict)
+    except TypeError:
+        retjson = None
+
+    return retjson
+
+
 def load_json(filename):
     r"""Load a JSON file"""
     with open(filename, "r") as fp_json:
@@ -96,19 +107,27 @@ def print_treedict(tree, depth=0):
 
 class ControlSpec(object):
     r"""Handle the control specification db"""
-    def __init__(self, configaddr=None, configdb=None, silent=True):
+    def __init__(self, configaddr=None,
+                 silent=True,
+                 redis_conn=None):
+
         if configaddr is not None:
-            treetitle = "System tree specified in: " + configaddr
-            print treetitle + "\n" + "-" * len(treetitle)
             if "http://" in configaddr:
                 print "opening from url: ", configaddr
-                self.configdb = load_json_over_http(configaddr)
+                configdb = load_json_over_http(configaddr)
+            elif "redis://" in configaddr:
+                key = configaddr.split("redis://")[1]
+                print "opening from redis key: ", key
+                configdb = load_json_from_redis(key, redis_conn)
             else:
                 print "opening from file: ", configaddr
-                self.configdb = load_json(configaddr)
+                configdb = load_json(configaddr)
 
         if configdb is not None:
             self.configdb = configdb
+        else:
+            print "no valid command spec found"
+            raise ValueError
 
         self.system_tree = {}
         self.build_system_tree()
