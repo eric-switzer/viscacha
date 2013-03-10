@@ -20,6 +20,9 @@ class RedisSubscribeQueue(threading.Thread):
         self.redis_conn = redis.Redis(connection_pool=self.pool)
         self.command_queue = command_queue
 
+        json_spec = open("example.json", 'r').read()
+        self.redis_conn.set("command_specification", json_spec)
+
         self.redis_pubsub = self.redis_conn.pubsub()
         # subscribe to both the general and specific client channels
         self.redis_pubsub.subscribe([subname])
