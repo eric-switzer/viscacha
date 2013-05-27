@@ -45,19 +45,23 @@ class RedisSubscribe(threading.Thread):
         if (msg['channel'] == self.client_id) or \
            (msg['channel'] == self.subname):
             # if the server tells the client to terminate its connection
-            if msg['data'] == 'terminate':
+            data_str = str(msg['data'])
+            if data_str == 'terminate':
                 self.redis_pubsub.unsubscribe()
             else:
                 try:
-                    data = msg['data'].split()
+                    data = data_str.split()
+                    # data = [channel, value] ack reply with set value
                     if len(data) == 2:
-                        channel = data[0]
-                        value = data[1]
+                        msg = (data[0] + "/indicator", ["ack", data[1]])
+                        wx.CallAfter(postmsg, msg)
 
-                    msg = (channel, value)
+                    # data = [channel] ack reply with channel only
+                    if len(data) == 1:
+                        msg = (data[0] + "/indicator", ["ack", None])
+                        wx.CallAfter(postmsg, msg)
 
-                    wx.CallAfter(postmsg, msg)
-                except:
+                except None:
                     pass
 
 

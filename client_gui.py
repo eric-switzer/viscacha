@@ -43,6 +43,7 @@ class CommandStatusIndicator(wx.Panel):
                         self.SetBackgroundColour("ff00000")
                 else:
                     self.SetBackgroundColour("#00ff00")
+                    Publisher().sendMessage(self.name, self.val_issued)
 
         except AttributeError:
             self.SetBackgroundColour("#aaaaaa")
